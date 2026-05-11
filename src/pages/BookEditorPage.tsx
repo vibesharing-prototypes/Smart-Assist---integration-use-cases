@@ -862,15 +862,19 @@ export default function BookEditorPage() {
                   onClick={handleGovernAI}
                   sx={{
                     fontWeight: 600,
+                    fontSize: "16px",
+                    lineHeight: "25.5px",
+                    letterSpacing: "0.16px",
+                    color: "#242628",
                     borderRadius: "12px",
                     px: "12px",
-                    border: "1px solid transparent",
-                    background:
-                      "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #be0c1e 0%, #ab48da 50%, #4069fe 100%) border-box",
+                    py: "4px",
+                    background: "#fff",
+                    border: "1px solid #B11F62",
                     "&::before": { display: "none" },
                     "&:hover": {
-                      background:
-                        "linear-gradient(#fafafa, #fafafa) padding-box, linear-gradient(128deg, #be0c1e 0%, #ab48da 50%, #4069fe 100%) border-box",
+                      background: "#fafafa",
+                      border: "1px solid #B11F62",
                     },
                   }}
                 >
