@@ -7,6 +7,11 @@ atlas-gn-app-switcher {
   display: none !important;
 }
 
+/* Global nav link label size */
+atlas-gn-nav-link {
+  font-size: 14px;
+}
+
 /* Collapsed side nav: 64px wide */
 :root {
   --atlas-side-nav-collapse-width: 64px;

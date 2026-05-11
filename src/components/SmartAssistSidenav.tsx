@@ -635,20 +635,23 @@ export default function SmartAssistSidenav({
               alignItems: "center",
               gap: "8px",
               px: "12px",
-              height: "40px",
-              borderRadius: "12px",
-              backgroundColor: color.surface.default.value,
-              outline: `1px solid ${color.action.aiPrimary.defaultGradientStart.value}`,
-              outlineOffset: "-1px",
-              transition: "background-color 0.15s ease",
-              "&:hover": { backgroundColor: color.surface.variant.value },
+              height: "32px",
+              borderRadius: "8px",
+              border: "1px solid transparent",
+              background:
+                "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",
+              transition: "background 0.15s ease",
+              "&:hover": {
+                background:
+                  "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #8e004a 17.49%, #0037b9 100%) border-box",
+              },
             }}
           >
-            <Box sx={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <AiSparkleIcon size="lg" />
+            <Box sx={{ width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <AiSparkleIcon size="md" />
             </Box>
-            <Box sx={{ height: 24, px: "4px", display: "flex", alignItems: "center" }}>
-              <Typography sx={{ fontSize: "16px", fontWeight: 600, lineHeight: "24px", letterSpacing: "0.2px", color: "#242628" }}>
+            <Box sx={{ height: 20, display: "flex", alignItems: "center" }}>
+              <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: "#242628" }}>
                 Regenerate
               </Typography>
             </Box>

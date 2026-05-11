@@ -348,7 +348,7 @@ export default function AdminBooksPage() {
           >
             Books
           </Typography>
-          <Button variant="contained" startIcon={<AddIcon size="lg" />} sx={{ fontWeight: 600 }}>
+          <Button variant="contained" startIcon={<AddIcon size="lg" />} sx={{ fontWeight: 600, fontSize: "16px" }}>
             Create book
           </Button>
           {!panelOpen && !overlayOpen && (
@@ -358,20 +358,13 @@ export default function AdminBooksPage() {
               startIcon={<AiSparkleIcon size="lg" />}
               onClick={openSmartAssist}
               sx={{
-                fontWeight: 600,
-                fontSize: "16px",
-                lineHeight: "25.5px",
-                letterSpacing: "0.16px",
-                color: "#242628",
-                borderRadius: "12px",
-                px: "12px",
-                py: "4px",
-                background: "#fff",
-                border: "1px solid #B11F62",
+                border: "1px solid transparent !important",
+                background:
+                  "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",
                 "&::before": { display: "none" },
                 "&:hover": {
-                  background: "#fafafa",
-                  border: "1px solid #B11F62",
+                  background:
+                    "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #8e004a 17.49%, #0037b9 100%) border-box",
                 },
               }}
             >

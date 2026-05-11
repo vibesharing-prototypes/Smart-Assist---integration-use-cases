@@ -853,28 +853,21 @@ export default function BookEditorPage() {
                 size="small"
                 sx={{ height: "22px", fontSize: "12px", fontWeight: 600, backgroundColor: color.surface.variant.value }}
               />
-              <Button variant="contained" sx={{ fontWeight: 600, minWidth: "90px", ml: "auto" }}>Publish</Button>
+              <Button variant="contained" sx={{ fontWeight: 600, fontSize: "16px", minWidth: "90px", ml: "auto" }}>Publish</Button>
               {!sidenavOpen && (
                 <Button
                   variant="outlined"
                   color="ai"
-                  startIcon={<AiSparkleIcon size="lg" />}
+                  startIcon={<AiSparkleIcon size="md" />}
                   onClick={handleGovernAI}
                   sx={{
-                    fontWeight: 600,
-                    fontSize: "16px",
-                    lineHeight: "25.5px",
-                    letterSpacing: "0.16px",
-                    color: "#242628",
-                    borderRadius: "12px",
-                    px: "12px",
-                    py: "4px",
-                    background: "#fff",
-                    border: "1px solid #B11F62",
+                    border: "1px solid transparent !important",
+                    background:
+                      "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",
                     "&::before": { display: "none" },
                     "&:hover": {
-                      background: "#fafafa",
-                      border: "1px solid #B11F62",
+                      background:
+                        "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #8e004a 17.49%, #0037b9 100%) border-box",
                     },
                   }}
                 >
