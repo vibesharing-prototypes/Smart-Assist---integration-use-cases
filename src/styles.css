@@ -7,9 +7,11 @@ atlas-gn-app-switcher {
   display: none !important;
 }
 
-/* Global nav link label size */
-atlas-gn-nav-link {
-  font-size: 14px;
+/* Global nav menu item label size: force 14px across top-level, tree, and AI nav lists */
+:root {
+  --lens-component-global-nav-list-item-font-size: 14px;
+  --lens-component-global-nav-list-tree-item-font-size: 14px;
+  --lens-component-global-nav-ai-side-nav-list-item-font-size: 14px;
 }
 
 /* Collapsed side nav: 64px wide */

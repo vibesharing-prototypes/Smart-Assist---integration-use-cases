@@ -358,6 +358,7 @@ export default function AdminBooksPage() {
               startIcon={<AiSparkleIcon size="lg" />}
               onClick={openSmartAssist}
               sx={{
+                fontSize: "16px",
                 border: "1px solid transparent !important",
                 background:
                   "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",

@@ -456,6 +456,7 @@ export default function ResourceCenterPage() {
                     onClick={openSmartAssist}
                     sx={{
                       fontWeight: 600,
+                      fontSize: "16px",
                       borderRadius: "12px",
                       px: "12px",
                       border: "1px solid transparent !important",
