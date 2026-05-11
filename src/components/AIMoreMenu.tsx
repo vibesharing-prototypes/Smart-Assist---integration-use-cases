@@ -1,7 +1,7 @@
 import { Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
 
 import GiveFeedbackIcon from "@diligentcorp/atlas-react-bundle/icons/GiveFeedback";
-import LockedIcon from "@diligentcorp/atlas-react-bundle/icons/Locked";
+import InfoIcon from "@diligentcorp/atlas-react-bundle/icons/Info";
 import ProfileIcon from "@diligentcorp/atlas-react-bundle/icons/Profile";
 
 interface AIMoreMenuProps {
@@ -15,7 +15,7 @@ export default function AIMoreMenu({ anchorEl, onClose, onPersonalizationClick }
 
   const items = [
     { Icon: ProfileIcon, label: "Personalization", onClick: () => { onClose(); onPersonalizationClick(); } },
-    { Icon: LockedIcon, label: "Learn about data privacy", onClick: onClose },
+    { Icon: InfoIcon, label: "Learn about data privacy", onClick: onClose },
     { Icon: GiveFeedbackIcon, label: "Give feedback", onClick: onClose },
   ];
 

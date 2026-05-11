@@ -497,9 +497,23 @@ export default function SmartAssistSidenav({
           <Button
             variant="text"
             size="small"
-            startIcon={<AddCircleIcon size="md" />}
+            startIcon={<AddCircleIcon size="lg" />}
             onClick={handleNewChat}
-            sx={{ height: "24px", fontSize: "12px", "& .MuiButton-startIcon": { mr: "4px" }, mb: "24px" }}
+            sx={{
+              height: "24px",
+              pl: "8px !important",
+              pr: "8px !important",
+              py: "4px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: 600,
+              lineHeight: "16px",
+              letterSpacing: "0.3px",
+              color: "#242628",
+              textTransform: "none",
+              "& .MuiButton-startIcon": { marginRight: "4px !important", color: "#242628" },
+              mb: "24px",
+            }}
           >
             New chat
           </Button>
@@ -643,7 +657,7 @@ export default function SmartAssistSidenav({
               transition: "background 0.15s ease",
               "&:hover": {
                 background:
-                  "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #8e004a 17.49%, #0037b9 100%) border-box",
+                  "linear-gradient(#f3f3f3, #f3f3f3) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",
               },
             }}
           >

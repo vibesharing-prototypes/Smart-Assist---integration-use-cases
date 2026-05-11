@@ -863,13 +863,21 @@ export default function BookEditorPage() {
                   sx={{
                     fontSize: "16px",
                     border: "1px solid transparent !important",
-                    background:
-                      "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) border-box",
+                    backgroundColor: "transparent !important",
+                    backgroundImage:
+                      "linear-gradient(#fff, #fff), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
+                    backgroundOrigin: "border-box !important",
+                    backgroundClip: "padding-box, border-box !important",
                     "&::before": { display: "none" },
-                    "&:hover": {
-                      background:
-                        "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #8e004a 17.49%, #0037b9 100%) border-box",
+                    "&:hover, &:not(.Mui-disabled):hover": {
+                      border: "1px solid transparent !important",
+                      backgroundColor: "transparent !important",
+                      backgroundImage:
+                        "linear-gradient(#f3f3f3, #f3f3f3), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
+                      backgroundOrigin: "border-box !important",
+                      backgroundClip: "padding-box, border-box !important",
                     },
+                    "&:hover::before, &::after, &:hover::after": { display: "none" },
                   }}
                 >
                   GovernAI
