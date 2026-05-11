@@ -357,7 +357,19 @@ export default function AdminBooksPage() {
               color="ai"
               startIcon={<AiSparkleIcon size="lg" />}
               onClick={openSmartAssist}
-              sx={{ fontWeight: 600, borderRadius: "12px", px: "12px" }}
+              sx={{
+                fontWeight: 600,
+                borderRadius: "12px",
+                px: "12px",
+                border: "1px solid transparent",
+                background:
+                  "linear-gradient(#fff, #fff) padding-box, linear-gradient(128deg, #be0c1e 0%, #ab48da 50%, #4069fe 100%) border-box",
+                "&::before": { display: "none" },
+                "&:hover": {
+                  background:
+                    "linear-gradient(#fafafa, #fafafa) padding-box, linear-gradient(128deg, #be0c1e 0%, #ab48da 50%, #4069fe 100%) border-box",
+                },
+              }}
             >
               Smart Assist
             </Button>
