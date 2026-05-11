@@ -7,11 +7,14 @@ atlas-gn-app-switcher {
   display: none !important;
 }
 
-/* Global nav menu item label size: force 14px across top-level, tree, and AI nav lists */
+/* Global nav menu item label size: force 14px across top-level, tree, and AI nav lists.
+   Atlas defines these props on `.lens-theme`; overriding there beats the cascade. */
+.lens-theme,
 :root {
-  --lens-component-global-nav-list-item-font-size: 14px;
-  --lens-component-global-nav-list-tree-item-font-size: 14px;
-  --lens-component-global-nav-ai-side-nav-list-item-font-size: 14px;
+  --lens-component-global-nav-list-item-font-size: 14px !important;
+  --lens-component-global-nav-list-tree-item-font-size: 14px !important;
+  --lens-component-global-nav-list-section-title-font-size: 14px !important;
+  --lens-component-global-nav-ai-side-nav-list-item-font-size: 14px !important;
 }
 
 /* Collapsed side nav: 64px wide */
