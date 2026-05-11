@@ -858,8 +858,9 @@ export default function BookEditorPage() {
                 <Button
                   variant="outlined"
                   color="ai"
-                  startIcon={<AiSparkleIcon size="md" />}
+                  startIcon={<AiSparkleIcon size="lg" />}
                   onClick={handleGovernAI}
+                  sx={{ fontWeight: 600, borderRadius: "12px", px: "12px" }}
                 >
                   GovernAI
                 </Button>

@@ -357,6 +357,7 @@ export default function AdminBooksPage() {
               color="ai"
               startIcon={<AiSparkleIcon size="lg" />}
               onClick={openSmartAssist}
+              sx={{ fontWeight: 600, borderRadius: "12px", px: "12px" }}
             >
               Smart Assist
             </Button>
