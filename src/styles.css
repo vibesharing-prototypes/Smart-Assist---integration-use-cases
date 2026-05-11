@@ -1,0 +1,39 @@
+@import "@diligentcorp/atlas-react-bundle/styles";
+@import "@diligentcorp/atlas-react-bundle/global-nav.css";
+
+/* Hide org-switcher + app-switcher — prototype shows Diligent branding only */
+atlas-gn-org-switcher,
+atlas-gn-app-switcher {
+  display: none !important;
+}
+
+/* Collapsed side nav: 64px wide */
+:root {
+  --atlas-side-nav-collapse-width: 64px;
+}
+
+/* Top bar sits next to the nav, not above it */
+mock-hb-global-navigator {
+  display: block;
+  margin-inline-start: var(--atlas-global-nav-content-left);
+  transition: margin-inline-start var(--atlas-global-nav-animation-duration, 0.2s)
+    var(--atlas-global-nav-easing, cubic-bezier(0.33, 1, 0.68, 1));
+}
+
+/* AppLayout's outer Box also paints the same gradient — override to white so
+   the main content area's rounded top-left corner is visible against it
+   (matches the side-nav / global-header surface). */
+.AtlasPrototypeAppLayout {
+  background: #fff !important;
+}
+
+[data-atlas-gn-app] {
+  height: calc(100dvh - var(--lens-component-global-header-height, 64px));
+  overflow: hidden;
+  border-top-left-radius: 24px;
+  background: radial-gradient(
+    125.08% 101.36% at 0% 0%,
+    var(--lens-semantic-color-background-base-gradient-start, #fff) 30.53%,
+    var(--lens-semantic-color-background-base-gradient-end, #fff) 100%
+  );
+}

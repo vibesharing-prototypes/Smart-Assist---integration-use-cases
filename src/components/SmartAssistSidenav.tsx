@@ -1,0 +1,756 @@
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
+import smartAssistAvatarUrl from "../assets/smart-assist-avatar.svg";
+import {
+  Box,
+  Button,
+  Drawer,
+  IconButton,
+  InputBase,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+
+import {
+  AIChatContent,
+  AIChatAIMessage,
+  AIChatUserMessage,
+  AIChatMessageHeader,
+  AIChatMessageAvatar,
+  AIChatMessageTextBlock,
+  AIChatMessageFooter,
+  AIChatThinkingIndicator,
+  AIChatTimestamp,
+  AIDisclaimer,
+} from "@diligentcorp/atlas-react-bundle";
+
+import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
+import { SmartSummaryIcon, SmartPrepIcon, SmartRiskScannerIcon } from "./InsightIcons.js";
+import { InsightSummaryView, InsightPrepView, InsightRiskView } from "./InsightDetailViews.js";
+import AddCircleIcon from "@diligentcorp/atlas-react-bundle/icons/AddCircle";
+import ArrowLeftIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowLeft";
+import ArrowUpIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowUp";
+import CloseIcon from "@diligentcorp/atlas-react-bundle/icons/Close";
+import ExpandRightIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandRight";
+import FullscreenIcon from "@diligentcorp/atlas-react-bundle/icons/Fullscreen";
+import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
+import ReloadIcon from "@diligentcorp/atlas-react-bundle/icons/Reload";
+
+import { type SuggestionCard, suggestionCards } from "../data/mockData.js";
+import { type ChatThread } from "../data/hybrid-search.constants.js";
+import RichAIMessageContent, { parseCiteText } from "./RichAIMessageContent.js";
+import SourcesBlock from "./SourcesBlock.js";
+import SourcesFilterButton from "./SourcesFilterButton.js";
+import AIMoreMenu from "./AIMoreMenu.js";
+import ChatThreadItem from "./ChatThreadItem.js";
+import PersonalizationDialog from "./PersonalizationDialog.js";
+import { useSmartAssist } from "../context/SmartAssistContext.js";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const AI_GRADIENT = "linear-gradient(90deg, #be0c1e 0%, #ab48da 50%, #4069fe 100%)";
+const THREAD_BG = "linear-gradient(135deg, #f9f9fc 31%, #fcfcff 100%)";
+const AI_PURPLE = "#ab48da";
+const DRAWER_WIDTH = 440;
+
+// ─── Suggestion cards ─────────────────────────────────────────────────────────
+
+function SuggestionCards({
+  cards,
+  onSelect,
+}: {
+  cards: SuggestionCard[];
+  onSelect: (prompt: string) => void;
+}) {
+  const { tokens: { semantic: { color, radius } } } = useTheme();
+
+  return (
+    <Stack gap="12px" sx={{ px: "4px" }}>
+      <Stack gap="4px">
+        <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", color: color.type.default.value }}>
+          Ideas to get you started
+        </Typography>
+        <Typography variant="textSm" sx={{ color: color.type.muted.value }}>
+          Click on one of the suggested prompt templates to populate the search field
+        </Typography>
+      </Stack>
+      <Stack gap="10px">
+        {cards.map((card) => (
+          <Box
+            key={card.prompt}
+            component="button"
+            onClick={() => onSelect(card.prompt)}
+            sx={{
+              all: "unset",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              p: "12px",
+              borderRadius: radius.lg.value,
+              border: `1px solid ${color.ui.divider.default.value}`,
+              backgroundColor: color.surface.default.value,
+              textAlign: "left",
+              transition: "background-color 0.15s ease",
+              "&:hover": { backgroundColor: color.surface.variant.value },
+            }}
+          >
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                height: "24px",
+                px: "12px",
+                borderRadius: "9999px",
+                backgroundColor: color.accent.blue.background.value,
+                width: "fit-content",
+              }}
+            >
+              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#004c6c", lineHeight: "16px", letterSpacing: "0.3px", wordWrap: "break-word" }}>
+                {card.category}
+              </Typography>
+            </Box>
+            <Typography sx={{ fontSize: "12px", fontWeight: 400, color: color.type.muted.value, lineHeight: "16px", letterSpacing: "0.3px", wordWrap: "break-word" }}>
+              {card.prompt}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface SmartAssistSidenavProps {
+  open: boolean;
+  onClose: () => void;
+  onExpand: () => void;
+  bookTitle?: string;
+  title?: string;
+  variant?: "temporary" | "persistent";
+  showInsights?: boolean;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function SmartAssistSidenav({
+  open,
+  onClose,
+  onExpand,
+  bookTitle: _bookTitle,
+  title = "Smart Assist",
+  variant = "temporary",
+  showInsights = false,
+}: SmartAssistSidenavProps) {
+  const { tokens: { semantic: { color, radius } } } = useTheme();
+  const {
+    messages,
+    sources,
+    isGenerating,
+    prompt,
+    setPrompt,
+    handleSend,
+    handleToggleSource,
+    resetChat,
+    loadThread,
+    threads,
+    chatTimestamp,
+    threadSplitIndex,
+    currentThreadId,
+    activeTab,
+    setActiveTab,
+    selectedInsight,
+    setSelectedInsight,
+  } = useSmartAssist();
+
+  const [smartAssistView, setSmartAssistView] = useState<"new-chat" | "thread-list">("new-chat");
+  const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
+  const [personalizationOpen, setPersonalizationOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const chatStarted = messages.length > 0;
+
+  const handleTabChange = (idx: number) => {
+    setActiveTab(idx);
+    if (idx === 0) setSmartAssistView("new-chat");
+    if (idx === 1) setSelectedInsight(null);
+  };
+
+  const handleNewChat = () => {
+    resetChat();
+    setSmartAssistView("new-chat");
+  };
+
+  const handleLoadThread = (thread: ChatThread) => {
+    loadThread(thread.messages, thread.id);
+    setSmartAssistView("new-chat");
+  };
+
+  const showSubheader =
+    (activeTab === 0 && smartAssistView === "new-chat") ||
+    (activeTab === 1 && selectedInsight !== null);
+  const insightLabel = selectedInsight === "summary"
+    ? "Smart Summary"
+    : selectedInsight === "prep"
+      ? "Smart Prep"
+      : selectedInsight === "risk"
+        ? "Smart Risk Scanner"
+        : null;
+  const subheaderLabel =
+    activeTab === 0
+      ? currentThreadId !== null
+        ? threads.find((t) => t.id === currentThreadId)?.title ?? "New chat"
+        : "New chat"
+      : insightLabel;
+  const handleSubheaderBack = () => {
+    if (activeTab === 0) setSmartAssistView("thread-list");
+    else setSelectedInsight(null);
+  };
+
+  const showInput = activeTab === 0 && smartAssistView === "new-chat";
+  const showThreadListFooter = activeTab === 0 && smartAssistView === "thread-list";
+
+  // Scroll the chat's own container to the bottom without disturbing
+  // ancestor scrollers (using scrollIntoView on a sentinel can scroll the
+  // whole page when the panel mounts — produces a visible jump on nav).
+  const scrollChatToBottom = (smooth: boolean) => {
+    const sentinel = messagesEndRef.current;
+    if (!sentinel) return;
+    let el: HTMLElement | null = sentinel.parentElement;
+    while (el && el.scrollHeight <= el.clientHeight) el = el.parentElement;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  };
+
+  // When panel mounts/opens with an active thread, show the chat (not the
+  // thread list) and jump to the latest message before paint — useLayoutEffect
+  // avoids the flicker of seeing scrollTop=0 between mount and a deferred scroll.
+  useLayoutEffect(() => {
+    if (open && currentThreadId !== null) {
+      setSmartAssistView("new-chat");
+      scrollChatToBottom(false);
+    }
+  }, [open]);
+
+  // Scroll to bottom whenever a new message arrives
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollChatToBottom(true);
+    }
+  }, [messages.length]);
+
+  return (
+    <>
+    <Drawer
+      anchor="right"
+      open={open}
+      variant={variant}
+      onClose={onClose}
+      sx={{
+        width: open ? DRAWER_WIDTH + 24 : 0,
+        minWidth: 0,
+        overflow: "hidden",
+        flexShrink: 0,
+        ...(variant === "persistent" && { height: "100%" }),
+        "& .MuiDrawer-paper": {
+          width: DRAWER_WIDTH,
+          boxSizing: "border-box",
+          padding: 0,
+          border: `1px solid ${color.outline.fixed.value}`,
+          boxShadow: "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 0,
+          overflow: "hidden",
+          borderRadius: "12px",
+          marginTop: "12px",
+          marginRight: "12px",
+          marginBottom: "12px",
+          marginLeft: "12px",
+          position: variant === "persistent" ? "relative" : "fixed",
+          height: variant === "persistent" ? "calc(100% - 24px)" : "calc(100vh - 24px)",
+        },
+      }}
+    >
+      {/* ── Header ── */}
+      <Box
+        sx={{
+          position: "relative",
+          flexShrink: 0,
+          backgroundColor: color.surface.default.value,
+        }}
+      >
+        {/* Title row */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap="12px"
+          sx={{ px: "12px", pt: "12px", pb: "12px" }}
+        >
+          <Stack direction="row" alignItems="center" gap="8px" sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: AI_PURPLE }}>
+              <AiSparkleIcon size="lg" />
+            </Box>
+            <Typography
+              sx={{
+                fontSize: "20px",
+                fontWeight: 600,
+                lineHeight: "24px",
+                color: color.type.default.value,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {title}
+            </Typography>
+          </Stack>
+          <Stack direction="row" alignItems="center" gap="16px" sx={{ flexShrink: 0 }}>
+            <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={onExpand} title="Open full screen">
+              <FullscreenIcon size="lg" />
+            </IconButton>
+            <IconButton sx={{ p: "4px", width: 32, height: 32 }} title="More options" onClick={(e) => setMoreMenuAnchor(e.currentTarget)}>
+              <MoreIcon size="lg" />
+            </IconButton>
+            <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={onClose} title="Close">
+              <CloseIcon size="lg" />
+            </IconButton>
+          </Stack>
+        </Stack>
+
+        {/* Tabs row — only in GovernAI (book) context */}
+        {showInsights && (
+          <Stack
+            direction="row"
+            alignItems="center"
+            gap="8px"
+            sx={{
+              flexShrink: 0,
+              px: "16px",
+              py: "8px",
+            }}
+          >
+            {(["Smart Assist", "Insights"] as const).map((label, idx) => (
+              <Box
+                key={label}
+                component="button"
+                onClick={() => handleTabChange(idx)}
+                sx={{
+                  all: "unset",
+                  cursor: "pointer",
+                  px: "12px",
+                  py: "4px",
+                  borderRadius: "9999px",
+                  border: activeTab === idx ? `1px solid ${color.type.default.value}` : "1px solid transparent",
+                  color: color.type.default.value,
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  lineHeight: "20px",
+                  transition: "border-color 0.15s, color 0.15s",
+                }}
+              >
+                {label}
+              </Box>
+            ))}
+          </Stack>
+        )}
+
+      </Box>
+
+      {/* ── Subheader ── */}
+      {showSubheader && (
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap="4px"
+          sx={{
+            flexShrink: 0,
+            px: "8px",
+            py: "6px",
+            borderTop: `1px solid ${color.ui.divider.default.value}`,
+            backgroundColor: color.surface.default.value,
+          }}
+        >
+          <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={handleSubheaderBack} title="Back">
+            <ArrowLeftIcon size="lg" />
+          </IconButton>
+          <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", color: color.type.default.value }}>
+            {subheaderLabel}
+          </Typography>
+        </Stack>
+      )}
+
+      {/* Gradient accent border — always at the bottom of the full header area */}
+      <Box sx={{ height: "1px", flexShrink: 0, background: AI_GRADIENT }} />
+
+      {/* ── Smart Assist tab — new chat ── */}
+      {activeTab === 0 && smartAssistView === "new-chat" && (
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            pt: "16px",
+            px: "16px",
+            pb: "16px",
+            background: THREAD_BG,
+          }}
+        >
+          {!chatStarted ? (
+            <Box sx={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", pb: "16px" }}>
+              <Typography
+                sx={{
+                  fontSize: "18px",
+                  fontWeight: 600,
+                  lineHeight: "28px",
+                  color: color.type.default.value,
+                  mt: "8px",
+                  mb: "24px",
+                }}
+              >
+                How can I assist you?
+              </Typography>
+              <SuggestionCards
+                cards={suggestionCards}
+                onSelect={(p) => setPrompt(p)}
+              />
+            </Box>
+          ) : (
+            <Box sx={{ "& .AtlasAIChatUserMessage .MuiTypography-body1": { fontSize: "14px !important" }, "& li": { fontSize: "14px" } }}>
+            <AIChatContent>
+              {chatTimestamp && threadSplitIndex === null && <AIChatTimestamp time={chatTimestamp} />}
+              {messages.map((msg, index) => (
+                <Fragment key={msg.id}>
+                  {chatTimestamp && threadSplitIndex !== null && threadSplitIndex >= 0 && index === threadSplitIndex && (
+                    <AIChatTimestamp time={chatTimestamp} />
+                  )}
+                  {msg.role === "user" ? (
+                    <AIChatUserMessage
+                      alignment="end"
+                      message={msg.content}
+                      header={
+                        <AIChatMessageHeader
+                          name="Jane Doe"
+                          time={msg.timestamp}
+                          avatar={<AIChatMessageAvatar uniqueId="jane-doe" initials="JD" />}
+                          slotProps={{ root: { sx: { flexDirection: "row-reverse" } } }}
+                        />
+                      }
+                    />
+                  ) : (
+                    <AIChatAIMessage
+                      header={
+                        <AIChatMessageHeader
+                          name="Smart Assist"
+                          time={msg.timestamp}
+                          avatar={<AIChatMessageAvatar uniqueId="smart-assist" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
+                        />
+                      }
+                      footer={
+                        <AIChatMessageFooter
+                          leadingActions={
+                            <Button variant="text" size="small" startIcon={<ReloadIcon size="md" />}>
+                              Regenerate
+                            </Button>
+                          }
+                        />
+                      }
+                    >
+                      {msg.richContent
+                        ? <RichAIMessageContent blocks={msg.richContent} sources={msg.sources} messageId={msg.id} />
+                        : /\[\d+\]/.test(msg.content) && msg.sources
+                          ? <RichAIMessageContent blocks={[{ type: "p", spans: parseCiteText(msg.content) }]} sources={msg.sources} messageId={msg.id} />
+                          : <AIChatMessageTextBlock>{msg.content}</AIChatMessageTextBlock>
+                      }
+                      {msg.sources && msg.sources.length > 0 && (
+                        <SourcesBlock sources={msg.sources} messageId={msg.id} />
+                      )}
+                    </AIChatAIMessage>
+                  )}
+                </Fragment>
+              ))}
+              {isGenerating && (
+                <AIChatAIMessage
+                  header={
+                    <AIChatMessageHeader
+                      name="Smart Assist"
+                      time=""
+                      avatar={<AIChatMessageAvatar uniqueId="smart-assist-thinking" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
+                    />
+                  }
+                >
+                  <AIChatThinkingIndicator label="Thinking" />
+                </AIChatAIMessage>
+              )}
+              <div ref={messagesEndRef} />
+            </AIChatContent>
+            </Box>
+          )}
+        </Box>
+      )}
+
+      {/* ── Smart Assist tab — thread list ── */}
+      {activeTab === 0 && smartAssistView === "thread-list" && (
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", background: THREAD_BG, pt: "24px", px: "16px", pb: "16px" }}>
+          <Button
+            variant="text"
+            size="small"
+            startIcon={<AddCircleIcon size="md" />}
+            onClick={handleNewChat}
+            sx={{ height: "24px", fontSize: "12px", "& .MuiButton-startIcon": { mr: "4px" }, mb: "24px" }}
+          >
+            New chat
+          </Button>
+          <Typography sx={{ fontSize: "12px", fontWeight: 600, lineHeight: "16px", color: color.type.muted.value, mb: "8px", px: "12px" }}>
+            All chats
+          </Typography>
+          <Stack>
+            {threads.map((thread) => (
+              <ChatThreadItem
+                key={thread.id}
+                thread={thread}
+                variant="sidenav"
+                onLoadThread={handleLoadThread}
+              />
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* ── Insights tab — feature list ── */}
+      {activeTab === 1 && selectedInsight === null && (
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            px: "16px",
+            pt: "24px",
+            pb: "16px",
+            background: THREAD_BG,
+          }}
+        >
+          <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value, mb: "16px" }}>
+            AI tools
+          </Typography>
+          <Stack gap="12px">
+            {([
+              { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Create and read an accurate executive summary" },
+              { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare smarter with suggested discussion topics" },
+              { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+            ] as const).map(({ Icon, id, label, desc }) => (
+              <Box
+                key={label}
+                component="button"
+                onClick={() => setSelectedInsight(id)}
+                sx={{
+                  all: "unset",
+                  boxSizing: "border-box",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                  p: "16px",
+                  border: `1px solid ${color.ui.divider.default.value}`,
+                  borderRadius: "12px",
+                  backgroundColor: color.surface.default.value,
+                  width: "100%",
+                  transition: "background-color 0.15s ease",
+                  "&:hover": { backgroundColor: color.surface.variant.value },
+                }}
+              >
+                <Box sx={{ flexShrink: 0, width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Icon size={24} />
+                </Box>
+                <Stack gap="4px" sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value }}>
+                    {label}
+                  </Typography>
+                  <Typography sx={{ alignSelf: "stretch", fontSize: "12px", fontWeight: 400, lineHeight: "16px", letterSpacing: "0.3px", color: color.type.muted.value }}>
+                    {desc}
+                  </Typography>
+                </Stack>
+                <Box sx={{ flexShrink: 0, p: "4px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#242628" }}>
+                  <ExpandRightIcon size="lg" />
+                </Box>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      )}
+
+      {/* ── Insights tab — feature view ── */}
+      {activeTab === 1 && selectedInsight !== null && (
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            pt: "16px",
+            px: "16px",
+            pb: "16px",
+            background: THREAD_BG,
+          }}
+        >
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: "16px" }}>
+            <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value }}>
+              Updated: April 23, 2024, 9:03 AM
+            </Typography>
+            <Stack direction="row" alignItems="center" gap="4px" sx={{ color: color.type.muted.value }}>
+              <AiSparkleIcon size="md" />
+              <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value }}>
+                Generated by AI
+              </Typography>
+            </Stack>
+          </Stack>
+
+          {selectedInsight === "summary" && <InsightSummaryView />}
+          {selectedInsight === "prep" && <InsightPrepView />}
+          {selectedInsight === "risk" && <InsightRiskView />}
+        </Box>
+      )}
+
+      {/* ── Insights footer (Regenerate) ── */}
+      {activeTab === 1 && (
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: "16px",
+            py: "12px",
+            borderTop: `1px solid ${color.ui.divider.default.value}`,
+            backgroundColor: color.surface.default.value,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Box
+            component="button"
+            sx={{
+              all: "unset",
+              boxSizing: "border-box",
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              px: "12px",
+              height: "40px",
+              borderRadius: "12px",
+              backgroundColor: color.surface.default.value,
+              outline: `1px solid ${color.action.aiPrimary.defaultGradientStart.value}`,
+              outlineOffset: "-1px",
+              transition: "background-color 0.15s ease",
+              "&:hover": { backgroundColor: color.surface.variant.value },
+            }}
+          >
+            <Box sx={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <AiSparkleIcon size="lg" />
+            </Box>
+            <Box sx={{ height: 24, px: "4px", display: "flex", alignItems: "center" }}>
+              <Typography sx={{ fontSize: "16px", fontWeight: 600, lineHeight: "24px", letterSpacing: "0.2px", color: "#242628" }}>
+                Regenerate
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      )}
+
+      {/* ── Thread list footer ── */}
+      {showThreadListFooter && (
+        <Box
+          sx={{
+            flexShrink: 0,
+            px: "16px",
+            py: "16px",
+            borderTop: `1px solid ${color.ui.divider.default.value}`,
+            backgroundColor: color.surface.default.value,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button variant="text" size="small">
+            Delete all chats
+          </Button>
+        </Box>
+      )}
+
+      {/* ── Input area (Smart Assist / new chat only) ── */}
+      {showInput && <Box sx={{ flexShrink: 0, backgroundColor: color.surface.default.value }}>
+        {/* AI glow highlight top border */}
+        <Box
+          sx={{
+            height: "1px",
+            background: `linear-gradient(90deg, transparent 0%, ${color.ai.default.gradientStart.value} 15%, ${color.ai.default.gradientMiddle.value} 50%, ${color.ai.default.gradientEnd.value} 85%, transparent 100%)`,
+          }}
+        />
+        <InputBase
+          multiline
+          fullWidth
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && prompt.trim()) {
+              e.preventDefault();
+              handleSend(prompt);
+            }
+          }}
+          placeholder="Ask me anything about your board materials"
+          sx={{
+            fontSize: "14px",
+            lineHeight: "20px",
+            color: color.type.default.value,
+            "& .MuiInputBase-input": { padding: "16px 24px 12px !important", height: "80px !important", overflow: "auto !important" },
+            "& .MuiInputBase-input::placeholder": { color: color.type.muted.value, opacity: 1 },
+            alignItems: "flex-start",
+          }}
+        />
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: "8px",
+            pb: "8px",
+          }}
+        >
+          <SourcesFilterButton sources={sources} onToggle={handleToggleSource} />
+          <IconButton
+            size="small"
+            onClick={() => { if (prompt.trim()) handleSend(prompt); }}
+            disabled={!prompt.trim() || isGenerating}
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: "10px",
+              border: `1px solid ${color.ui.divider.default.value}`,
+              color: prompt.trim() ? color.type.default.value : color.type.muted.value,
+            }}
+          >
+            <ArrowUpIcon size="md" />
+          </IconButton>
+        </Box>
+        <Box
+          sx={{
+            borderTop: `1px solid ${color.ui.divider.default.value}`,
+            px: "16px",
+            py: "12px",
+            // Force light-theme colors — Drawer renders in a DOM portal that doesn't
+            // inherit AppLayout's CSS custom properties, so tokens must be applied explicitly.
+            "& p, & span": { color: `${color.type.muted.value} !important` },
+            "& a": { color: `${color.action.primary.default.value} !important` },
+          }}
+        >
+          <AIDisclaimer variant="disclosure" learnMore={{ href: "#" }} />
+        </Box>
+      </Box>}
+    </Drawer>
+    <AIMoreMenu
+      anchorEl={moreMenuAnchor}
+      onClose={() => setMoreMenuAnchor(null)}
+      onPersonalizationClick={() => setPersonalizationOpen(true)}
+    />
+    <PersonalizationDialog open={personalizationOpen} onClose={() => setPersonalizationOpen(false)} />
+    </>
+  );
+}

@@ -1,0 +1,26 @@
+node_modules
+dist
+package-lock.json
+pnpm-lock.yaml
+
+# Environment variables
+.env
+server/.env
+
+# Secrets / local agent config
+.mcp.json
+.claude/
+.cursor/
+.vscode/
+
+# OS / editor noise
+.DS_Store
+
+# Design references not needed at runtime
+figma-exports/
+
+# Backend not used by the deployed static prototype
+server/
+
+# Root-level reference docs / PDFs
+AI in the boardroom report v4_INTERACTIVE*.pdf

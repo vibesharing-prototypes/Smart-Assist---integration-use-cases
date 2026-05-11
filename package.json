@@ -1,0 +1,46 @@
+{
+  "name": "@diligentcorp/atlas-mui-vite-prototype",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "A Vite project for prototyping Atlas with MUI",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "server": "cd server && npm start",
+    "server:dev": "cd server && npm run dev",
+    "atlas-inventory": "node scripts/generate-atlas-inventory.mjs"
+  },
+  "dependencies": {
+    "@diligentcorp/atlas-react-bundle": "https://atlas.diligent.com/react-bundle.tgz",
+    "@emotion/cache": "^11",
+    "@emotion/react": "^11",
+    "@emotion/styled": "^11",
+    "@hello-pangea/dnd": "^18",
+    "@lit/react": "^1",
+    "@mui/icons-material": "^7.3.9",
+    "@mui/material": "^7",
+    "@mui/system": "^7",
+    "@mui/utils": "^7",
+    "@mui/x-data-grid": "^8",
+    "@mui/x-data-grid-pro": "^8",
+    "@mui/x-date-pickers": "^8",
+    "@mui/x-date-pickers-pro": "^8",
+    "@mui/x-license": "^8",
+    "@mui/x-tree-view": "^8",
+    "lit": "^3",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-router": "^7",
+    "tslib": "^2"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4",
+    "playwright": "^1.59.1",
+    "typescript": "^5",
+    "vite": "^7"
+  }
+}
