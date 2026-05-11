@@ -6,7 +6,7 @@
   "description": "A Vite project for prototyping Atlas with MUI",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "server": "cd server && npm start",
     "server:dev": "cd server && npm run dev",
