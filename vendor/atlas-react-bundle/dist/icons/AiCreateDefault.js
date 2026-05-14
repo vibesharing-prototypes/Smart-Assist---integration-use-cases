@@ -1,0 +1,24 @@
+"use client";
+import React from "react";
+import { iconSizes, Size2xl, SizeLg, SizeMd, SizeXl, VariantOutlined } from "./utils/constants.js";
+import { createIconComponent } from "./utils/createIconComponent.js";
+const variants = [
+    [VariantOutlined, SizeLg, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M12 4C12.7228 4 13.4228 4.09763 14.0889 4.27734L11.6201 5.51172C8.20709 5.70843 5.5 8.53768 5.5 12C5.5 15.5899 8.41015 18.5 12 18.5C15.463 18.5 18.2915 15.7918 18.4873 12.3779L19.7217 9.90918C19.9018 10.5758 20 11.2764 20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M12.75 11.25H16V12.75H12.75V16H11.25V12.75H8V11.25H11.25V8H12.75V11.25Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M19.333 4.66699L22 6L19.333 7.33301L18 10L16.667 7.33301L14 6L14.2217 5.88867L15.9316 5.0332L16.667 4.66699L18 2L19.333 4.66699Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeXl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M20 6C21.6943 6 23.3182 6.30116 24.8213 6.85254L22.1445 8.19141C21.4487 8.06586 20.732 8 20 8C13.3726 8 8 13.3726 8 20C8 26.6274 13.3726 32 20 32C26.6274 32 32 26.6274 32 20C32 19.2673 31.9334 18.55 31.8076 17.8535L33.1465 15.1758C33.6985 16.6797 34 18.3046 34 20C34 27.732 27.732 34 20 34C12.268 34 6 27.732 6 20C6 12.268 12.268 6 20 6Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M21 19H27V21H21V27H19V21H13V19H19V13H21V19Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M32.333 7.66699L37 10L32.333 12.333L30 17L27.667 12.333L23 10L27.1162 7.94141L27.667 7.66699L30 3L32.333 7.66699Z", fill: "currentColor" }))],
+    [VariantOutlined, Size2xl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M24 9C26.1392 9 28.1733 9.4489 30.0146 10.2559L27.5469 11.4893C26.4194 11.1703 25.2296 11 24 11C16.8203 11 11 16.8203 11 24C11 31.1797 16.8203 37 24 37C31.1797 37 37 31.1797 37 24C37 22.7696 36.8282 21.5793 36.5088 20.4512L37.7432 17.9824C38.5509 19.8245 39 21.8597 39 24C39 32.2843 32.2843 39 24 39C15.7157 39 9 32.2843 9 24C9 15.7157 15.7157 9 24 9Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M25 23H32V25H25V32H23V25H16V23H23V16H25V23Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M36.333 11.667L41 14L36.333 16.333L34 21L31.667 16.333L27 14L31.667 11.667L34 7L36.333 11.667Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeMd, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M10 3C10.7093 3 11.3939 3.10561 12.0391 3.30176L10.3291 4.1582L9.61621 4.51367C6.75772 4.71072 4.5 7.09146 4.5 10C4.5 13.0376 6.96243 15.5 10 15.5C12.9088 15.5 15.2887 13.2417 15.4854 10.3828L15.8418 9.6709L16.6963 7.95801C16.8931 8.60412 17 9.28954 17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M10.75 9.25H13.5V10.75H10.75V13.5H9.25V10.75H6.5V9.25H9.25V6.5H10.75V9.25Z", fill: "currentColor" }),
+            React.createElement("path", { d: "M15.667 4.33301L18 5.5L15.667 6.66699L14.5 9L13.333 6.66699L11 5.5L12.1367 4.93066L13.333 4.33301L14.5 2L15.667 4.33301Z", fill: "currentColor" }))],
+];
+export default createIconComponent("AiCreateDefaultIcon", iconSizes, ...variants);
+//# sourceMappingURL=AiCreateDefault.js.map

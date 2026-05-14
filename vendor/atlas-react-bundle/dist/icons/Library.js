@@ -1,0 +1,16 @@
+"use client";
+import React from "react";
+import { iconSizes, Size2xl, SizeLg, SizeMd, SizeXl, VariantOutlined } from "./utils/constants.js";
+import { createIconComponent } from "./utils/createIconComponent.js";
+const variants = [
+    [VariantOutlined, SizeLg, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M9.99995 13.75H13.7403V12.25H9.99995V13.75ZM9.99995 10.75H17.4807V9.25H9.99995V10.75ZM9.99995 7.74995H17.4807V6.25H9.99995V7.74995ZM6.24998 17.5V2.5H21.2499V17.5H6.24998ZM7.74993 16H19.7499V3.99998H7.74993V16ZM2.75 20.9999V6.3077H4.24998V19.5H17.4422V20.9999H2.75Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeXl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M15.5107 22.51H23.0588V20.416H15.5107V22.51ZM15.5107 18.1189H29.4957V16.025H15.5107V18.1189ZM15.5107 13.7279H29.4957V11.634H15.5107V13.7279ZM9.60479 29.9779V4.16602H35.4167V29.9779H9.60479ZM11.6987 27.8839H33.3227V6.25997H11.6987V27.8839ZM4.5835 34.9992V9.70018H6.67745V32.9052H29.8825V34.9992H4.5835Z", fill: "currentColor" }))],
+    [VariantOutlined, Size2xl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M17.9192 26.7692H27.7652V24.5H17.9192V26.7692ZM17.9192 21.8653H35.6113V19.5961H17.9192V21.8653ZM17.9192 16.9614H35.6113V14.6923H17.9192V16.9614ZM11.0384 36.4614V5H42.4998V36.4614H11.0384ZM13.3076 34.1922H40.2306V7.2692H13.3076V34.1922ZM5.5 41.9998V11.1539H7.7692V39.7307H36.346V41.9998H5.5Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeMd, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M7.99996 11.291H11.7836V10.2077H7.99996V11.291ZM7.99996 8.79098H14.5672V7.70768H7.99996V8.79098ZM7.99996 6.29098H14.5672V5.20768H7.99996V6.29098ZM5.20831 14.5826V2.41602H17.3749V14.5826H5.20831ZM6.2916 13.4993H16.2916V3.49933H6.2916V13.4993ZM2.625 17.1659V5.25577H3.70831V16.0826H14.5352V17.1659H2.625Z", fill: "currentColor" }))],
+];
+export default createIconComponent("LibraryIcon", iconSizes, ...variants);
+//# sourceMappingURL=Library.js.map

@@ -25,18 +25,29 @@ Please prompt the user to get a new key from the Atlas documentation on Confluen
 
 ## Atlas React Bundle dependency
 
-`@diligentcorp/atlas-react-bundle` is **vendored** — the tarball is committed at
-`vendor/atlas-react-bundle.tgz` and `package.json` points at it with a `file:`
-dependency. This pins the design system to one exact version so local and deployed
-builds can never drift apart.
+`@diligentcorp/atlas-react-bundle` is **vendored** — the pre-built bundle is
+committed as a plain directory at `vendor/atlas-react-bundle/` and `package.json`
+points at it with a `file:vendor/atlas-react-bundle` dependency. This pins the
+design system to one exact version so local and deployed builds can never drift
+apart.
 
 Previously this was an `https://atlas.diligent.com/react-bundle.tgz` URL dependency
 with no version, which meant every fresh `npm install` (including deploys) could pull
 a different bundle and silently change theme tokens, fonts, and table styles.
 
-To update Atlas: re-pack the new bundle into `vendor/atlas-react-bundle.tgz`
-(`npm pack` the installed package), then `npm install`. Package lock files remain
-gitignored — the `file:` dependency is deterministic on its own.
+Notes on the vendored copy:
+- It is committed as an unpacked directory, not a `.tgz` — the VibeSharing import
+  strips tarball files, so a committed `.tgz` would not survive a deploy.
+- Its `package.json` has `devDependencies` and build `scripts` removed. Those
+  pulled private `@diligentcorp/*` packages that are not on the public registry;
+  a vendored pre-built bundle is consumed, never rebuilt, so they are not needed.
+  Keeping them caused `npm install` to 404 on the deploy.
+- Source maps (`*.map`) were dropped to keep the directory lean.
+
+To update Atlas: `npm pack` the freshly installed package, extract it over
+`vendor/atlas-react-bundle/`, re-strip `devDependencies`/`scripts` from its
+`package.json`, delete `*.map` files, then `npm install`. Package lock files
+remain gitignored — the `file:` directory dependency is deterministic on its own.
 
 ## Styling
 

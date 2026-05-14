@@ -1,0 +1,16 @@
+"use client";
+import React from "react";
+import { iconSizes, Size2xl, SizeLg, SizeMd, SizeXl, VariantOutlined } from "./utils/constants.js";
+import { createIconComponent } from "./utils/createIconComponent.js";
+const variants = [
+    [VariantOutlined, SizeLg, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M6.24998 17.5V13.9423H7.74993V16H19.7499V5.99998H7.74993V8.05768H6.24998V2.5H21.2499V17.5H6.24998ZM2.75 20.9999V6.3077H4.24998V19.5H17.4422V20.9999H2.75ZM12.7115 14.8365L11.6673 13.7923L13.675 11.75H6.24998V10.25H13.675L11.6673 8.20765L12.7115 7.16345L16.548 11L12.7115 14.8365Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeXl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M9.60479 29.9779V22.8305H11.6987V27.8839H33.3227V9.18735H11.6987V14.2408H9.60479V4.16602H35.4167V29.9779H9.60479ZM4.5835 34.9992V9.70018H6.67745V32.9052H29.8825V34.9992H4.5835ZM20.78 25.0538L19.3217 23.5955L23.2769 19.5826H9.60479V17.4886H23.2769L19.3217 13.4758L20.78 12.0175L27.2981 18.5356L20.78 25.0538Z", fill: "currentColor" }))],
+    [VariantOutlined, Size2xl, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M11.0384 36.4614V27.1538H13.3076V34.1922H40.2306V10.5385H13.3076V17.5769H11.0384V5H42.4998V36.4614H11.0384ZM5.5 41.9998V11.1539H7.7692V39.7307H36.346V41.9998H5.5ZM24.6922 30.2615L23.1115 28.6807L28.2231 23.4999H11.0384V21.2308H28.2231L23.1115 16.05L24.6922 14.4692L32.5883 22.3653L24.6922 30.2615Z", fill: "currentColor" }))],
+    [VariantOutlined, SizeMd, React.createElement(React.Fragment, null,
+            React.createElement("path", { d: "M5.20831 14.5826V11.4512H6.2916V13.4993H16.2916V4.99933H6.2916V7.04741H5.20831V2.41602H17.3749V14.5826H5.20831ZM2.625 17.1659V5.25577H3.70831V16.0826H14.5352V17.1659H2.625ZM10.5096 12.3631L9.74356 11.5971L11.5416 9.79097H5.20831V8.70768H11.5416L9.74356 6.90156L10.5096 6.13556L13.6233 9.24933L10.5096 12.3631Z", fill: "currentColor" }))],
+];
+export default createIconComponent("ExtractIcon", iconSizes, ...variants);
+//# sourceMappingURL=Extract.js.map
