@@ -16,6 +16,12 @@ server/.env
 # OS / editor noise
 .DS_Store
 
+# Local security reports / gstack artifacts
+.gstack/
+
+# Throwaway dev/debug scripts (screenshots, inspection, verification)
+_*.mjs
+
 # Design references not needed at runtime
 figma-exports/
 

@@ -33,7 +33,15 @@ export function CitationTooltipContent({ source }: { source: Source }) {
 
 // ─── Parse plain text [N] bracket citations → Span[], cites only after sentences ─
 
-export function parseCiteText(text: string): Span[] {
+/**
+ * Optional sequential chip-number allocator. Pass the same counter across every
+ * parseCiteText call in a view (Summary, Smart Prep, Risk Scanner) so each chip
+ * gets a unique visible number — even when several chips resolve to the same
+ * source document/page.
+ */
+export type CiteCounter = { n: number };
+
+export function parseCiteText(text: string, counter?: CiteCounter): Span[] {
   const result: Span[] = [];
   const sentenceRe = /([^.!?]*[.!?]+)/g;
   let lastBound = 0;
@@ -47,7 +55,10 @@ export function parseCiteText(text: string): Span[] {
       return "";
     });
     if (clean.length) result.push(clean);
-    for (const n of cites) { result.push(" "); result.push({ cite: n }); }
+    for (const n of cites) {
+      result.push(" ");
+      result.push(counter ? { cite: n, label: ++counter.n } : { cite: n });
+    }
   };
 
   while ((m = sentenceRe.exec(text)) !== null) {
@@ -144,7 +155,7 @@ function Spans({ spans, sources, idPrefix, previewContext }: { spans: Span[]; so
         ) : (
           <CiteBadge
             key={i}
-            n={span.cite}
+            n={span.label ?? span.cite}
             source={sources?.find((s) => s.index === span.cite)}
             id={idPrefix ? `${idPrefix}-c${i}` : `badge-${i}`}
             previewContext={previewContext}
@@ -199,7 +210,9 @@ export default function RichAIMessageContent({ blocks, sources, messageId, previ
             >
               {block.items.map((item, j) => (
                 <Typography key={j} component="li" sx={{ fontSize: "14px", lineHeight: "22px", color: TEXT }}>
-                  {item}
+                  {typeof item === "string"
+                    ? item
+                    : <Spans spans={item} sources={sources} idPrefix={messageId ? `${messageId}-b${i}-li${j}` : undefined} previewContext={previewContext} />}
                 </Typography>
               ))}
             </Box>
@@ -244,8 +257,8 @@ export default function RichAIMessageContent({ blocks, sources, messageId, previ
                           key={ci}
                           sx={{
                             fontSize: "13px",
-                            color: ci === 0 ? TEXT : MUTED,
-                            fontWeight: ci === 0 ? 500 : 400,
+                            color: block.defaultTextColor ? TEXT : (ci === 0 ? TEXT : MUTED),
+                            fontWeight: block.defaultTextColor ? 400 : (ci === 0 ? 500 : 400),
                             lineHeight: "20px",
                             py: "12px",
                             px: "16px",

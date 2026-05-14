@@ -5,7 +5,7 @@ This guide will help you set up the AI Assistant feature powered by AWS Bedrock 
 ## Prerequisites
 
 1. AWS Account with Bedrock access
-2. AWS IAM credentials (Access Key ID and Secret Access Key)
+2. AWS credentials — an SSO profile is strongly preferred over long-lived IAM keys
 3. Bedrock model access enabled for Claude 3.5 Sonnet in your region
 
 ## Setup Steps
@@ -17,13 +17,19 @@ This guide will help you set up the AI Assistant feature powered by AWS Bedrock 
 3. Request model access for `Claude 3.5 Sonnet v2`
 4. Wait for approval (usually instant for most regions)
 
-### 2. Create AWS IAM Credentials
+### 2. Get AWS credentials (prefer SSO)
 
-1. Go to IAM Console → Users
-2. Create a new user or use existing one
-3. Attach policy: `AmazonBedrockFullAccess` (or create custom policy with bedrock:InvokeModel permission)
-4. Create access keys (Access Key ID + Secret Access Key)
-5. Save these credentials securely
+**Preferred — AWS SSO (short-lived credentials):**
+1. Configure an SSO profile with `aws configure sso`
+2. Use that profile name as `AWS_PROFILE` in `server/.env`
+3. The server picks it up via the AWS default credential chain — nothing to paste
+
+**Only if SSO is not available — IAM access keys (discouraged):**
+1. Go to IAM Console → Users, create or use a user
+2. Attach a **least-privilege** policy — `bedrock:InvokeModel` on the specific
+   model ARN only. Do **not** attach `AmazonBedrockFullAccess`.
+3. Create access keys and store them in a secrets manager, not in chat/email
+4. Rotate them on a schedule
 
 ### 3. Configure Environment Variables
 
@@ -32,12 +38,21 @@ This guide will help you set up the AI Assistant feature powered by AWS Bedrock 
    cp .env.example server/.env
    ```
 
-2. Edit `server/.env` and add your credentials:
+2. Edit `server/.env`. With SSO (preferred):
    ```
-   AWS_ACCESS_KEY_ID=your_access_key_here
-   AWS_SECRET_ACCESS_KEY=your_secret_key_here
-   AWS_REGION=us-east-1
+   AWS_REGION=us-west-2
+   AWS_PROFILE=your_sso_profile_here
    ```
+
+3. Generate the API shared secret and set it in **both** files:
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(24).toString('hex'))"
+   ```
+   - `server/.env`  → `API_SHARED_SECRET=<value>`
+   - root `.env`    → `VITE_API_SECRET=<same value>`
+
+   `/api/*` fails closed (HTTP 503) until `API_SHARED_SECRET` is set, and rejects
+   any request missing the matching `x-api-secret` header.
 
 ### 4. Install Server Dependencies
 
@@ -109,7 +124,11 @@ Edit `server/documents.json` to add your own documents:
 ## Security Notes
 
 ⚠️ **IMPORTANT**:
-- Never commit the `server/.env` file to git
-- These credentials are for testing only
-- For production, use AWS IAM roles, not access keys
-- Consider using AWS Cognito or IAM Identity Center for authentication
+- Never commit `server/.env` or the root `.env` to git (both are gitignored)
+- This server is a **localhost-only dev tool**. It binds to `127.0.0.1` and proxies
+  a Diligent AWS Bedrock account. Do not expose it on a public interface or `0.0.0.0`.
+- `/api/*` is gated by `API_SHARED_SECRET` and a CORS allowlist — keep both set
+- Prefer AWS SSO / IAM roles over long-lived access keys
+- Scope IAM to `bedrock:InvokeModel` on the specific model only — never `*FullAccess`
+- For any real deployment, replace the shared secret with proper auth (Cognito,
+  IAM Identity Center) and a scoped IAM role

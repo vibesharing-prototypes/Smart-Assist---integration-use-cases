@@ -12,6 +12,10 @@ interface CitationPreviewContextValue {
   previewContext: PreviewContext;
   openCitation: (source: Source, chipId: string, page?: number, context?: PreviewContext) => void;
   closeCitation: () => void;
+  /** Dismiss the preview surface but keep the clicked chip highlighted. Used by
+   *  panel-mode Insight citations, which scroll the book in place instead of
+   *  opening a doc preview — the chip should still show its active state. */
+  dismissPreview: () => void;
   setPreviewPage: (page: number) => void;
 }
 
@@ -43,9 +47,16 @@ export function CitationPreviewProvider({ children }: { children: React.ReactNod
     setPreviewContext("chat");
   }, []);
 
+  const dismissPreview = useCallback(() => {
+    // Keep activeChipId so the clicked chip stays highlighted.
+    setPreviewSource(null);
+    setPreviewPage(1);
+    setPreviewContext("chat");
+  }, []);
+
   return (
     <CitationPreviewContext.Provider
-      value={{ previewSource, activeChipId, previewPage, previewContext, openCitation, closeCitation, setPreviewPage }}
+      value={{ previewSource, activeChipId, previewPage, previewContext, openCitation, closeCitation, dismissPreview, setPreviewPage }}
     >
       {children}
     </CitationPreviewContext.Provider>

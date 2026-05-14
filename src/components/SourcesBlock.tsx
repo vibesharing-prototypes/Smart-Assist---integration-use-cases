@@ -30,6 +30,16 @@ export default function SourcesBlock({ sources, messageId }: { sources: Source[]
   const visible = deduped.slice(0, MAX_VISIBLE);
   const overflow = deduped.length - MAX_VISIBLE;
 
+  // MUI's small Chip label inherits a line-height that sits the text slightly
+  // above the chip's optical center. Pin it to the chip height so it centers.
+  const chipLabelSx = {
+    "& .MuiChip-label": {
+      lineHeight: "normal",
+      display: "flex",
+      alignItems: "center",
+    },
+  };
+
   return (
     <Box sx={{ mt: "8px" }}>
       <Typography
@@ -56,19 +66,22 @@ export default function SourcesBlock({ sources, messageId }: { sources: Source[]
               variant="outlined"
               clickable
               onClick={() => openCitation(s, chipId, 1)}
-              sx={isActive ? {
-                borderColor: color.outline.default.value,
-                backgroundColor: color.action.secondary.activeFill.value,
-                "&:hover": {
+              sx={{
+                ...chipLabelSx,
+                ...(isActive ? {
                   borderColor: color.outline.default.value,
-                  backgroundColor: color.action.secondary.activeFill.value,
-                },
-              } : undefined}
+                  backgroundColor: color.action.secondary.active.value,
+                  "&:hover": {
+                    borderColor: color.outline.default.value,
+                    backgroundColor: color.action.secondary.active.value,
+                  },
+                } : {}),
+              }}
             />
           );
         })}
         {overflow > 0 && (
-          <Chip label={`+${overflow}`} size="small" variant="outlined" />
+          <Chip label={`+${overflow}`} size="small" variant="outlined" sx={chipLabelSx} />
         )}
       </Box>
     </Box>

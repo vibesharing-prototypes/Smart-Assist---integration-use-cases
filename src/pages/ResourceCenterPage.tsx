@@ -87,8 +87,6 @@ const COL = {
   actions: 152,
 } as const;
 
-const SURFACE_VARIANT_SUBTLE = "#F9F9FC";
-
 // ─── Header cell ──────────────────────────────────────────────────────────────
 
 function HeaderCell({
@@ -191,10 +189,7 @@ function WorkspaceRow({
       direction="row"
       alignItems="stretch"
       sx={{
-        cursor: "pointer",
         borderBottom: isLast ? "none" : `1px solid ${color.ui.divider.default.value}`,
-        transition: "background-color 0.12s",
-        "&:hover": { backgroundColor: color.surface.variant.value },
       }}
     >
       {/* Name */}
@@ -217,6 +212,8 @@ function WorkspaceRow({
             <WorkspacesIcon size="md" />
           </Box>
           <Typography
+            component="button"
+            type="button"
             sx={{
               fontSize: "14px",
               fontWeight: 600,
@@ -225,6 +222,14 @@ function WorkspaceRow({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+              "&:focus-visible": { outline: "2px solid #1C4EE4", outlineOffset: "2px", borderRadius: "2px" },
             }}
           >
             {workspace.name}
@@ -383,8 +388,6 @@ export default function ResourceCenterPage() {
         <Box
           sx={{
             width: "100%",
-            maxWidth: 1440,
-            mx: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "16px",
@@ -426,9 +429,9 @@ export default function ResourceCenterPage() {
             <Stack direction="row" alignItems="center" gap="16px">
               <Typography
                 sx={{
-                  fontSize: "28px",
+                  fontSize: "24px",
                   fontWeight: 600,
-                  lineHeight: "34px",
+                  lineHeight: "32px",
                   color: color.type.default.value,
                   flex: 1,
                   overflow: "hidden",
@@ -513,7 +516,7 @@ export default function ResourceCenterPage() {
           {/* Table */}
           <Box
             sx={{
-              backgroundColor: SURFACE_VARIANT_SUBTLE,
+              backgroundColor: color.surface.variant.value,
               border: `1px solid ${color.ui.divider.default.value}`,
               borderRadius: "16px",
               overflow: "hidden",

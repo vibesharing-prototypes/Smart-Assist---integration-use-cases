@@ -7,7 +7,6 @@ import {
   ButtonGroup,
   Chip,
   IconButton,
-  Link,
   Stack,
   Tab,
   Tabs,
@@ -18,6 +17,7 @@ import {
 import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
+import { AiBadge, AiInaccuracyDisclaimer } from "../components/AiDisclaimers.js";
 import CalendarIcon from "@diligentcorp/atlas-react-bundle/icons/Calendar";
 import EducationCertificationIcon from "@diligentcorp/atlas-react-bundle/icons/EducationCertification";
 import ExpandDownIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandDown";
@@ -369,14 +369,7 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
               >
                 Competitor updates
               </Typography>
-              <Stack direction="row" alignItems="center" gap="4px" /* spacing/0_5 */>
-                <AiSparkleIcon size="md" />
-                <Typography
-                  sx={{ fontSize: "11px", fontWeight: 400, color: color.type.muted.value, lineHeight: "16px", letterSpacing: "0.4px" }}
-                >
-                  Curated and summarised by AI
-                </Typography>
-              </Stack>
+              <AiBadge>Curated and summarised by AI</AiBadge>
             </Stack>
           </Stack>
         </Box>
@@ -410,14 +403,7 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
       </Box>
 
       {/* ---- AI Disclaimer ---- */}
-      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap="8px">
-        <Typography sx={{ fontSize: "10px", color: color.type.muted.value, lineHeight: "12px" }}>
-          AI-generated content may have inaccuracies.
-        </Typography>
-        <Link href="#" underline="always" sx={{ fontSize: "10px", whiteSpace: "nowrap", flexShrink: 0, lineHeight: "12px" }}>
-          Learn more
-        </Link>
-      </Stack>
+      <AiInaccuracyDisclaimer />
 
       {/* ---- Education and templates ---- */}
       <Box sx={{ borderRadius: "12px", overflow: "hidden" }}>

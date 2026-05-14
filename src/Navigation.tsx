@@ -1,5 +1,6 @@
 import { RoutedNavLink, NavLink } from "@diligentcorp/atlas-react-bundle/global-nav";
 import CurrentBooksIcon from "@diligentcorp/atlas-react-bundle/icons/CurrentBooks";
+import HomeIcon from "@diligentcorp/atlas-react-bundle/icons/Home";
 import ResourceCenterIcon from "@diligentcorp/atlas-react-bundle/icons/ResourceCenter";
 import ExpandLeftIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandLeft";
 import { SvgIcon } from "@mui/material";
@@ -8,15 +9,37 @@ import UserManagementIcon from "@diligentcorp/atlas-react-bundle/icons/UserManag
 import { NavLink as RouterNavLink, useLocation } from "react-router";
 import AppNavHeader from "./components/AppNavHeader.js";
 
-function BooksNavLink() {
+type Persona = "admin" | "director";
+
+function usePersona(): Persona {
+  const { pathname } = useLocation();
+  if (pathname === "/books" || pathname.startsWith("/books/") || pathname.startsWith("/admin")) {
+    return "admin";
+  }
+  return "director";
+}
+
+function DirectorBooksNavLink() {
+  const { pathname } = useLocation();
+  const isActive = pathname === "/director/books" || pathname.startsWith("/director/books/");
+  return (
+    <RouterNavLink to="/director/books">
+      <NavLink as="span" label="Books" isCurrent={isActive}>
+        <CurrentBooksIcon slot="icon" />
+      </NavLink>
+    </RouterNavLink>
+  );
+}
+
+function AdminBooksNavLink() {
   const { pathname } = useLocation();
   const isActive =
-    pathname === "/books" ||
-    pathname.startsWith("/books/") ||
     pathname === "/admin/books" ||
-    pathname.startsWith("/admin/books/");
+    pathname.startsWith("/admin/books/") ||
+    pathname === "/books" ||
+    pathname.startsWith("/books/");
   return (
-    <RouterNavLink to="/books" style={{ marginTop: "12px" }}>
+    <RouterNavLink to="/admin/books">
       <NavLink as="span" label="Books" isCurrent={isActive}>
         <CurrentBooksIcon slot="icon" />
       </NavLink>
@@ -52,15 +75,18 @@ function DecisionHubIcon(props: React.ComponentProps<typeof SvgIcon>) {
   );
 }
 
-export default function Navigation() {
+function DirectorNavigation() {
   return (
     <>
       <AppNavHeader />
       <NavLink label="Boards" as="span" style={{ marginTop: "12px" }}>
         <ExpandLeftIcon slot="icon" />
       </NavLink>
-      <BooksNavLink />
-      <RoutedNavLink to="/resource-center" label="Resource Center">
+      <RoutedNavLink to="/director" end label="Home">
+        <HomeIcon slot="icon" />
+      </RoutedNavLink>
+      <DirectorBooksNavLink />
+      <RoutedNavLink to="/director/resource-center" label="Resource Center">
         <ResourceCenterIcon slot="icon" />
       </RoutedNavLink>
       <NavLink label="Smart Builder" as="span">
@@ -78,4 +104,37 @@ export default function Navigation() {
       </NavLink>
     </>
   );
+}
+
+function AdminNavigation() {
+  return (
+    <>
+      <AppNavHeader />
+      <NavLink label="Boards" as="span" style={{ marginTop: "12px" }}>
+        <ExpandLeftIcon slot="icon" />
+      </NavLink>
+      <AdminBooksNavLink />
+      <RoutedNavLink to="/admin/resource-center" label="Resource Center">
+        <ResourceCenterIcon slot="icon" />
+      </RoutedNavLink>
+      <NavLink label="Smart Builder" as="span">
+        <SmartBuilderIcon slot="icon" />
+      </NavLink>
+      <NavLink label="Decision Hub" as="span">
+        <DecisionHubIcon slot="icon" />
+      </NavLink>
+      <NavLink label="Questionnaires" as="span">
+        <QuestionnairesIcon slot="icon" />
+      </NavLink>
+      <hr />
+      <NavLink label="Boards account" as="span">
+        <UserManagementIcon slot="icon" />
+      </NavLink>
+    </>
+  );
+}
+
+export default function Navigation() {
+  const persona = usePersona();
+  return persona === "admin" ? <AdminNavigation /> : <DirectorNavigation />;
 }

@@ -3,53 +3,13 @@ export function InsightsEmptyStateIllustration({
   height = 132,
 }: { width?: number; height?: number }) {
   return (
-    <svg width={width} height={height} viewBox="0 0 160 132" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clipPath="url(#empty-state-clip)">
-        <path d="M162.186 38.3252L203.755 62.3252L148.755 157.588L107.186 133.588L162.186 38.3252Z" fill="#E2E2E5" />
-        <path d="M44.3672 56.2373L45.2332 56.7373L1.64002 132.243L0.773991 131.743L44.3672 56.2373Z" fill="url(#empty-state-line0)" />
-        <path d="M132.764 -0.864258L133.63 -0.364258L57.1297 132.138L56.2637 131.638L132.764 -0.864258Z" fill="url(#empty-state-line1)" />
-        <g filter="url(#empty-state-shadow)">
-          <path d="M48 46C48 39.3726 53.3726 34 60 34H100C106.627 34 112 39.3726 112 46V86C112 92.6274 106.627 98 100 98H60C53.3726 98 48 92.6274 48 86V46Z" fill="white" shapeRendering="crispEdges" />
-          <path d="M88.5249 61.5L90.3999 57.75L94.1499 55.875L90.3999 54L88.5249 50.25L86.6499 54L82.8999 55.875L86.6499 57.75L88.5249 61.5Z" fill="url(#empty-state-sparkle)" />
-          <path d="M79.2749 62.125L75.3999 54.375L71.5166 62.125L63.7749 66L71.5166 69.875L75.3999 77.625L79.2749 69.875L87.0249 66L79.2749 62.125Z" fill="url(#empty-state-sparkle)" />
-          <path d="M86.6499 74.2498L88.5249 70.4998L90.3999 74.2498L94.1499 76.1248L90.3999 77.9998L88.5249 81.7498L86.6499 77.9998L82.8999 76.1248L86.6499 74.2498Z" fill="url(#empty-state-sparkle)" />
-        </g>
-      </g>
-      <defs>
-        <filter id="empty-state-shadow" x="44" y="30" width="104" height="104" filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
-          <feFlood floodOpacity="0" result="BackgroundImageFix" />
-          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha" />
-          <feOffset dx="16" dy="16" />
-          <feGaussianBlur stdDeviation="10" />
-          <feComposite in2="hardAlpha" operator="out" />
-          <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0" />
-          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow" />
-          <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape" />
-        </filter>
-        <linearGradient id="empty-state-line0" x1="-8.9997" y1="153" x2="34.0003" y2="70.9997" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#E2E2E5" stopOpacity="0" />
-          <stop offset="0.15" stopColor="#BE0C1E" />
-          <stop offset="0.5" stopColor="#AB48DA" />
-          <stop offset="0.85" stopColor="#4069FE" />
-          <stop offset="1" stopColor="#E2E2E5" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="empty-state-line1" x1="59.9997" y1="131.999" x2="134" y2="19.4995" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#E2E2E5" stopOpacity="0" />
-          <stop offset="0.15" stopColor="#BE0C1E" />
-          <stop offset="0.5" stopColor="#AB48DA" />
-          <stop offset="0.85" stopColor="#4069FE" />
-          <stop offset="1" stopColor="#E2E2E5" stopOpacity="0" />
-        </linearGradient>
-        <linearGradient id="empty-state-sparkle" x1="65.1715" y1="60.8812" x2="93.5336" y2="82.5562" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#BE0C1E" />
-          <stop offset="0.5" stopColor="#AB48DA" />
-          <stop offset="1" stopColor="#4069FE" />
-        </linearGradient>
-        <clipPath id="empty-state-clip">
-          <rect width="160" height="132" fill="white" />
-        </clipPath>
-      </defs>
-    </svg>
+    <img
+      src="/insights-empty-state.svg"
+      width={width}
+      height={height}
+      alt=""
+      style={{ display: "block", width, height }}
+    />
   );
 }
 

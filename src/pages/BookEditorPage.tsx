@@ -6,19 +6,17 @@ import {
   Checkbox,
   Chip,
   IconButton,
+  InputAdornment,
   Stack,
   Tab,
   Tabs,
+  TextField,
   Typography,
   useTheme,
 } from "@mui/material";
 
 import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
-import CaretLeftIcon from "@diligentcorp/atlas-react-bundle/icons/CaretLeft";
-import CaretRightIcon from "@diligentcorp/atlas-react-bundle/icons/CaretRight";
 import ExpandRightIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandRight";
-import ZoomInIcon from "@diligentcorp/atlas-react-bundle/icons/ZoomIn";
-import ZoomOutIcon from "@diligentcorp/atlas-react-bundle/icons/ZoomOut";
 import CollapseListIcon from "@diligentcorp/atlas-react-bundle/icons/CollapseList";
 import AddCircleIcon from "@diligentcorp/atlas-react-bundle/icons/AddCircle";
 import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
@@ -30,6 +28,8 @@ import LinkIcon from "@diligentcorp/atlas-react-bundle/icons/Link";
 import FullscreenIcon from "@diligentcorp/atlas-react-bundle/icons/Fullscreen";
 import FacePagesIcon from "@diligentcorp/atlas-react-bundle/icons/FacePages";
 import ExpandListIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandList";
+import SearchIcon from "@diligentcorp/atlas-react-bundle/icons/Search";
+import EditIcon from "@diligentcorp/atlas-react-bundle/icons/Edit";
 
 import DocumentIcon from "@diligentcorp/atlas-react-bundle/icons/Document";
 
@@ -38,17 +38,29 @@ import KeyIcon from "@diligentcorp/atlas-react-bundle/icons/Key";
 
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
+import DocumentViewerToolbar from "../components/DocumentViewerToolbar.js";
 import { useCitationPreview } from "../context/CitationPreviewContext.js";
 import { useSmartAssist } from "../context/SmartAssistContext.js";
-import { DOCUMENTS, getBookPageForCitation, type DocumentId } from "../data/documents.js";
+import {
+  DOCUMENTS,
+  getBookPageForCitation,
+  q2BoardPackageNav,
+  q2BoardPackageNavPageById,
+  q2BoardPackagePages,
+  q2BoardPackageBuildStructure,
+  type BookNavItem,
+  type DocumentId,
+} from "../data/documents.js";
 import {
   type BookTab,
   type BookDocument,
   adminBooks,
   bookStructure,
   reviewNavStructure,
-  type NavItem,
 } from "../data/mockData.js";
+
+/** Q2 2026 Board Package (book id "1") renders the assembled 14-document pack. */
+const Q2_BOARD_PACKAGE_ID = "1";
 
 
 // ─── Build book tab ───────────────────────────────────────────────────────────
@@ -56,6 +68,11 @@ import {
 type TreeNode = BookTab | BookDocument;
 
 const INDENT_PER_LEVEL = 48;
+
+// Book-reader nav selection — matches the director book reader's active row:
+// an #ECF0FF fill with a 2×20 #0040D5 rounded indicator bar pinned to its left.
+const NAV_SELECTED_BG = "#ECF0FF";
+const NAV_SELECTED_FG = "#0040D5";
 
 function DocumentRow({
   doc,
@@ -216,7 +233,7 @@ function TabRow({
             flex: 1,
             minWidth: 0,
             fontSize: "16px",
-            fontWeight: 600,
+            fontWeight: 400,
             lineHeight: "24px",
             letterSpacing: "0.2px",
             color: color.type.default.value,
@@ -225,7 +242,18 @@ function TabRow({
             whiteSpace: "nowrap",
           }}
         >
-          {tab.name}
+          {(() => {
+            const idx = tab.name.indexOf(":");
+            if (idx === -1) return tab.name;
+            const numbering = tab.name.slice(0, idx + 1);
+            const rest = tab.name.slice(idx + 1);
+            return (
+              <>
+                <Box component="span" sx={{ fontWeight: 600 }}>{numbering}</Box>
+                {rest}
+              </>
+            );
+          })()}
         </Typography>
         <IconButton size="medium" sx={{ width: 40, height: 40 }}>
           <MoreIcon size="md" />
@@ -281,13 +309,12 @@ function BuildBookTree({
               : "4px";
 
         if (g.kind === "files") {
-          const isLastGroup = i === groups.length - 1;
           return (
             <Box key={`f-${i}`} sx={{ width: "100%", mt }}>
               {g.items.map((doc, j) => {
-                const isLastDoc = j === g.items.length - 1;
-                // Hide divider on the very last element within this parent tab
-                const showDivider = !(isLastGroup && isLastDoc);
+                // Divider only between sibling documents; hidden on the last
+                // doc since whatever follows is a tab or end-of-list.
+                const showDivider = j < g.items.length - 1;
                 return (
                   <DocumentRow
                     key={doc.id}
@@ -331,13 +358,24 @@ function BuildBookTree({
   );
 }
 
-function BuildBookTab({ bookTitle: _bookTitle }: { bookTitle: string }) {
-  const { tokens: { semantic: { color } } } = useTheme();
-
+function BuildBookTab({ bookTitle: _bookTitle, bookId }: { bookTitle: string; bookId: string }) {
+  // The Q2 2026 Board Package uses the assembled tab/subtab/document tree that
+  // mirrors the book reader nav and Smart Summary TOC; other books keep the mock.
+  const structure = bookId === Q2_BOARD_PACKAGE_ID ? q2BoardPackageBuildStructure : bookStructure;
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [expanded, setExpanded] = useState<Set<string>>(
-    new Set(["t1", "t1-1", "t1-1-2"])
-  );
+  const [expanded, setExpanded] = useState<Set<string>>(() => {
+    const ids = new Set<string>();
+    const walk = (nodes: (BookTab | BookDocument)[]) => {
+      for (const n of nodes) {
+        if (n.type === "tab") {
+          if (n.expanded) ids.add(n.id);
+          walk(n.children);
+        }
+      }
+    };
+    walk(structure);
+    return ids;
+  });
 
   const toggleSelected = (id: string) => {
     setSelected((prev) => {
@@ -362,52 +400,54 @@ function BuildBookTab({ bookTitle: _bookTitle }: { bookTitle: string }) {
       {/* Toolbar */}
       <Box
         sx={{
-          px: "32px",
-          pb: "10px",
+          pb: "16px",
           display: "flex",
           flexWrap: "wrap",
           gap: "8px",
-          alignItems: "center",
+          alignItems: "flex-end",
         }}
       >
-        {/* Left group: search + selection + actions */}
-        <Stack direction="row" alignItems="center" gap="8px" sx={{ flex: 1 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              border: `1px solid ${color.ui.divider.default.value}`,
-              borderRadius: "6px",
-              px: "10px",
-              py: "4px",
-              gap: "6px",
-              width: "220px",
-              backgroundColor: color.surface.default.value,
+        {/* Left group: search + actions, all left-aligned */}
+        <Stack direction="row" alignItems="flex-end" gap="8px" sx={{ flex: 1 }}>
+          <TextField
+            label="Search"
+            placeholder="Search"
+            size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon size="lg" />
+                </InputAdornment>
+              ),
             }}
+            sx={{ width: "220px" }}
+          />
+          <Button
+            variant="text"
+            startIcon={<EditIcon size="md" />}
+            endIcon={<ExpandDownIcon size="md" />}
+            sx={{ fontSize: "13px", fontWeight: 600 }}
           >
-            <Typography sx={{ fontSize: "13px", color: color.type.muted.value, flex: 1 }}>Search</Typography>
-          </Box>
-          <Button variant="text" endIcon={<ExpandDownIcon size="md" />} sx={{ fontSize: "13px", fontWeight: 600 }}>
             Actions
-          </Button>
-        </Stack>
-
-        {/* Right group: wraps to line 2 when narrow */}
-        <Stack direction="row" alignItems="center" gap="8px">
-          <Button variant="text" startIcon={<CollapseListIcon size="md" />} sx={{ fontSize: "13px", fontWeight: 600 }}>
-            Collapse
           </Button>
           <Button variant="text" startIcon={<AddCircleIcon size="md" />} sx={{ fontSize: "13px", fontWeight: 600 }}>
             Add tab
           </Button>
+          <Button variant="text" startIcon={<CollapseListIcon size="md" />} sx={{ fontSize: "13px", fontWeight: 600 }}>
+            Collapse
+          </Button>
+        </Stack>
+
+        {/* Right: approve all */}
+        <Stack direction="row" alignItems="flex-end" gap="8px">
           <Button variant="outlined" sx={{ fontSize: "13px", fontWeight: 600 }}>Approve all</Button>
         </Stack>
       </Box>
 
       {/* Tree */}
-      <Box sx={{ flex: 1, overflowY: "auto", px: "32px" }}>
+      <Box sx={{ flex: 1, overflowY: "auto" }}>
         <BuildBookTree
-          nodes={bookStructure}
+          nodes={structure}
           selected={selected}
           onToggle={toggleSelected}
           expanded={expanded}
@@ -421,7 +461,7 @@ function BuildBookTab({ bookTitle: _bookTitle }: { bookTitle: string }) {
 // ─── Review book tab ──────────────────────────────────────────────────────────
 
 function NavTreeItem({ item, activeId, onSelect, depth = 0 }: {
-  item: NavItem;
+  item: BookNavItem;
   activeId: string;
   onSelect: (id: string) => void;
   depth?: number;
@@ -430,8 +470,9 @@ function NavTreeItem({ item, activeId, onSelect, depth = 0 }: {
   const [expanded, setExpanded] = useState(item.expanded ?? false);
   const isActive = item.id === activeId;
 
-  // Items starting with a digit or "Agenda" are section headings; everything else is a document
-  const isSection = /^\d|^Agenda/.test(item.label);
+  // Tabs/subtabs are section headings; documents are leaves. Falls back to the
+  // legacy label-prefix heuristic for books that don't carry an explicit kind.
+  const isSection = item.kind ? item.kind !== "document" : /^\d|^Agenda/.test(item.label);
 
   if (isSection) {
     return (
@@ -481,83 +522,114 @@ function NavTreeItem({ item, activeId, onSelect, depth = 0 }: {
     );
   }
 
-  // Document item
+  // Document item — selected state mirrors the director book reader: a rounded
+  // #ECF0FF fill with a 2×20 #0040D5 indicator bar pinned to its left edge.
   return (
-    <Stack
-      direction="row"
-      alignItems="flex-start"
-      gap="6px"
-      sx={{
-        pl: `${16 + depth * 16}px`,
-        pr: "8px",
-        py: "6px",
-        cursor: "pointer",
-        borderLeft: isActive
-          ? `2px solid ${color.action.primary.default.value}`
-          : "2px solid transparent",
-        backgroundColor: isActive ? color.surface.variant.value : "transparent",
-        "&:hover": { backgroundColor: color.surface.variant.value },
-      }}
+    <Box
       onClick={() => onSelect(item.id)}
+      sx={{ pl: `${16 + depth * 16}px`, pr: "8px", cursor: "pointer" }}
     >
-      <Box sx={{ mt: "1px", flexShrink: 0, color: color.type.muted.value }}>
-        <PageIcon size="md" />
-      </Box>
-      <Typography
+      <Stack
+        direction="row"
+        alignItems="center"
+        gap="8px"
         sx={{
-          fontSize: "12px",
-          color: color.type.default.value,
-          lineHeight: "18px",
-          flex: 1,
-          overflow: "hidden",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
+          position: "relative",
+          pl: "12px",
+          pr: "4px",
+          py: "8px",
+          borderRadius: "8px",
+          backgroundColor: isActive ? NAV_SELECTED_BG : "transparent",
+          "&:hover": {
+            backgroundColor: isActive ? NAV_SELECTED_BG : color.surface.variant.value,
+          },
         }}
       >
-        {item.label}
-      </Typography>
-      {item.restricted && (
-        <Box sx={{ mt: "1px", flexShrink: 0, color: color.type.muted.value }}>
-          <KeyIcon size="md" />
+        {isActive && (
+          <Box
+            sx={{
+              position: "absolute",
+              left: 0,
+              top: "10px",
+              width: "2px",
+              height: "20px",
+              backgroundColor: NAV_SELECTED_FG,
+              borderRadius: "24px",
+            }}
+          />
+        )}
+        <Box sx={{ flexShrink: 0, color: color.type.muted.value }}>
+          <PageIcon size="md" />
         </Box>
-      )}
-    </Stack>
+        <Typography
+          sx={{
+            flex: 1,
+            fontSize: "12px",
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 400,
+            lineHeight: "16px",
+            letterSpacing: "0.3px",
+            color: color.type.default.value,
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+          }}
+        >
+          {item.label}
+        </Typography>
+        {item.restricted && (
+          <Box sx={{ flexShrink: 0, color: color.type.muted.value }}>
+            <KeyIcon size="md" />
+          </Box>
+        )}
+      </Stack>
+    </Box>
   );
 }
 
 // Page images exported from Figma — file numbers 12..21 map to printed pages 1..10
 // (page-12 is the cover; page-21 is the back cover).
 const PAGE_IMAGES = Array.from({ length: 10 }, (_, i) => `/boardroom-pages/page-${12 + i}.png`);
-const TOTAL_PAGES = PAGE_IMAGES.length;
 const ZOOM_LEVELS = [50, 75, 100, 125, 150, 200];
 
 function ReviewBookTab({
   bookTitle: _bookTitle,
+  bookId,
   assistOpen,
   forcedPage,
   forcedPageNonce,
   forcedDocumentId,
 }: {
   bookTitle: string;
+  bookId: string;
   assistOpen: boolean;
   forcedPage?: number;
   forcedPageNonce?: number;
   forcedDocumentId?: DocumentId;
 }) {
   const { tokens: { semantic: { color } } } = useTheme();
+
+  // The Q2 2026 Board Package (book id "1") is the assembled 14-document pack
+  // cited by Smart Summary / Prep / Risk. Other books keep the boardroom mock.
+  const isQ2BoardPackage = bookId === Q2_BOARD_PACKAGE_ID;
+  const navStructure: BookNavItem[] = isQ2BoardPackage ? q2BoardPackageNav : reviewNavStructure;
+
   const [navOpen, setNavOpen] = useState(true);
-  const [activeNavId, setActiveNavId] = useState("s1-2-1-1-d1");
+  const [activeNavId, setActiveNavId] = useState(
+    isQ2BoardPackage ? `doc:${q2BoardPackagePages[0].documentId}` : "s1-2-1-1-d1",
+  );
   const [currentPage, setCurrentPage] = useState(forcedPage ?? 1);
   const [zoomIndex, setZoomIndex] = useState(2); // 100%
-  const totalPages = TOTAL_PAGES;
   const zoomPct = ZOOM_LEVELS[zoomIndex];
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // When a document is "opened" via the citation preview's Open button, overlay
-  // its pages onto the assembled book at the document's bookStartPage offset so
-  // the main viewport mirrors what the AI preview panel was showing.
+  // For the Q2 Board Package the assembled pages ARE the cited documents, so
+  // no overlay is needed. For other books, when a document is "opened" via the
+  // citation preview's Open button, overlay its pages onto the boardroom mock
+  // at the document's bookStartPage offset.
   const pageImages = (() => {
+    if (isQ2BoardPackage) return q2BoardPackagePages.map((p) => p.image);
     if (!forcedDocumentId) return PAGE_IMAGES;
     const doc = DOCUMENTS[forcedDocumentId];
     if (!doc) return PAGE_IMAGES;
@@ -568,6 +640,18 @@ function ReviewBookTab({
     });
     return imgs;
   })();
+  const totalPages = pageImages.length;
+
+  // Structure-nav click → scroll the assembled book to the page that nav row
+  // maps to (tabs/subtabs jump to their first document; documents to their
+  // own page). Q2 Board Package only.
+  const handleSelectNavItem = (navId: string) => {
+    setActiveNavId(navId);
+    const bookPage = q2BoardPackageNavPageById[navId];
+    if (typeof bookPage === "number") {
+      setCurrentPage(Math.min(totalPages, Math.max(1, bookPage)));
+    }
+  };
 
   useEffect(() => {
     if (assistOpen) setNavOpen(false);
@@ -577,9 +661,9 @@ function ReviewBookTab({
   // triggers to the same page fire again.
   useEffect(() => {
     if (typeof forcedPage === "number") {
-      setCurrentPage(Math.min(TOTAL_PAGES, Math.max(1, forcedPage)));
+      setCurrentPage(Math.min(totalPages, Math.max(1, forcedPage)));
     }
-  }, [forcedPage, forcedPageNonce]);
+  }, [forcedPage, forcedPageNonce, totalPages]);
 
   useEffect(() => {
     pageRefs.current[currentPage - 1]?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -598,14 +682,14 @@ function ReviewBookTab({
   } as const;
 
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", ml: "32px" }}>
+    <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
       {/* ── Floating top toolbar ── */}
       <Stack
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        sx={{ flexShrink: 0, mb: "12px", mr: "24px", px: "24px", py: "8px", ...cardSx }}
+        sx={{ flexShrink: 0, mb: "12px", px: "24px", py: "8px", ...cardSx }}
       >
         <Stack direction="row" alignItems="center" gap="24px">
           {/* Nav sub-group */}
@@ -655,14 +739,14 @@ function ReviewBookTab({
       </Stack>
 
       {/* ── Content row: floating nav panel + document area ── */}
-      <Box sx={{ flex: 1, display: "flex", overflow: "hidden", mr: "24px", mb: "12px", gap: "12px" }}>
+      <Box sx={{ flex: 1, display: "flex", overflow: "hidden", mb: "12px", gap: "12px" }}>
 
         {/* Floating nav panel — no tabs */}
         {navOpen && (
           <Box sx={{ width: "300px", flexShrink: 0, display: "flex", flexDirection: "column", overflow: "hidden", ...cardSx }}>
-            <Box sx={{ flex: 1, overflowY: "auto", p: "4px 8px" }}>
-              {reviewNavStructure.map((item) => (
-                <NavTreeItem key={item.id} item={item} activeId={activeNavId} onSelect={setActiveNavId} />
+            <Box sx={{ flex: 1, overflowY: "auto", p: "16px 8px 4px" }}>
+              {navStructure.map((item) => (
+                <NavTreeItem key={item.id} item={item} activeId={activeNavId} onSelect={handleSelectNavItem} />
               ))}
             </Box>
           </Box>
@@ -694,34 +778,14 @@ function ReviewBookTab({
             ))}
           </Box>
 
-          {/* Bottom toolbar */}
-          <Box sx={{ position: "absolute", bottom: "20px", left: "50%", transform: "translateX(-50%)", backgroundColor: color.surface.default.value, borderRadius: "12px", boxShadow: "0px 8px 16px rgba(15, 17, 19, 0.10), 0px 0px 2px rgba(15, 17, 19, 0.10)", outline: `1px ${color.ui.divider.default.value} solid`, outlineOffset: "-1px", p: "8px" }}>
-            <Stack direction="row" alignItems="center">
-              <Button variant="text" size="small" sx={{ color: color.type.default.value, fontSize: "16px", fontWeight: 600, lineHeight: "24px", letterSpacing: "0.2px", px: "12px", py: "4px", borderRadius: "8px", minWidth: 0, textTransform: "none" }}>
-                Agenda
-              </Button>
-              <Stack direction="row" alignItems="center" gap="8px">
-                <IconButton size="small" sx={{ p: "4px", borderRadius: "8px", color: color.type.default.value }} disabled={currentPage <= 1} onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}>
-                  <CaretLeftIcon size="lg" />
-                </IconButton>
-                <Stack direction="row" alignItems="center" gap="4px">
-                  <Box sx={{ width: "40px", height: "32px", px: "4px", borderRadius: "4px", outline: `1px ${color.ui.divider.default.value} solid`, outlineOffset: "-1px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value }}>{currentPage}</Typography>
-                  </Box>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value, width: "12px", textAlign: "center" }}>/</Typography>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value }}>{totalPages}</Typography>
-                </Stack>
-                <IconButton size="small" sx={{ p: "4px", borderRadius: "8px", color: color.type.default.value }} disabled={currentPage >= totalPages} onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}>
-                  <CaretRightIcon size="lg" />
-                </IconButton>
-              </Stack>
-              <Stack direction="row" alignItems="center">
-                <IconButton size="small" sx={{ p: "4px", borderRadius: "8px", color: color.type.default.value }} disabled={zoomIndex <= 0} onClick={() => setZoomIndex((z) => Math.max(0, z - 1))}><ZoomOutIcon size="lg" /></IconButton>
-                <Button variant="text" size="small" sx={{ color: color.type.default.value, fontSize: "16px", fontWeight: 600, lineHeight: "24px", letterSpacing: "0.2px", px: "12px", py: "4px", borderRadius: "8px", minWidth: 0, textTransform: "none" }}>{zoomPct}%</Button>
-                <IconButton size="small" sx={{ p: "4px", borderRadius: "8px", color: color.type.default.value }} disabled={zoomIndex >= ZOOM_LEVELS.length - 1} onClick={() => setZoomIndex((z) => Math.min(ZOOM_LEVELS.length - 1, z + 1))}><ZoomInIcon size="lg" /></IconButton>
-              </Stack>
-            </Stack>
-          </Box>
+          {/* Bottom toolbar — 25px inside doc area + 12px content-row mb = 37px from viewport bottom */}
+          <DocumentViewerToolbar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            zoomIndex={zoomIndex}
+            onZoomIndexChange={setZoomIndex}
+          />
         </Box>
       </Box>
     </Box>
@@ -749,11 +813,13 @@ export default function BookEditorPage() {
 
   // GovernAI visibility lives in the shared SmartAssistContext so panel/overlay
   // state persists across navigation between admin books, resource center, and
-  // book editor pages. Inside a book, fresh opens default to the docked panel.
+  // book editor pages. Inside a book, fresh opens default to the docked panel —
+  // unless the user switched to overlay earlier this session, in which case
+  // openInBook honors that choice.
   const {
     panelOpen: sidenavOpen,
     overlayOpen,
-    openPanel,
+    openInBook,
     closePanel,
     closeOverlay,
     expandToOverlay,
@@ -798,28 +864,59 @@ export default function BookEditorPage() {
     }
   }, []);
 
-  const handleGovernAI = openPanel;
+  const handleGovernAI = openInBook;
   const handleExpand = expandToOverlay;
   const handleCollapse = collapseToPanel;
 
-  const { previewSource } = useCitationPreview();
+  const { previewSource, previewContext, dismissPreview } = useCitationPreview();
   const overlayOpenRef = useRef(overlayOpen);
   overlayOpenRef.current = overlayOpen;
   const handleExpandRef = useRef(handleExpand);
   handleExpandRef.current = handleExpand;
 
   useEffect(() => {
-    if (previewSource && !overlayOpenRef.current) {
+    if (!previewSource) return;
+    // When the GovernAI panel is docked, an Insights citation into *this* book
+    // scrolls to the cited page in the book viewer instead of opening the
+    // right-side doc preview. A citation into a *different* book can't be shown
+    // in place, so it falls through to the overlay preview. In overlay mode the
+    // doc preview is fine either way — there's room for it next to the chat.
+    if (previewContext === "insight" && !overlayOpenRef.current) {
+      const citedBookId = previewSource.documentId
+        ? DOCUMENTS[previewSource.documentId]?.bookId
+        : undefined;
+      if (citedBookId === id) {
+        let bookPage: number | undefined;
+        if (previewSource.documentId && DOCUMENTS[previewSource.documentId]) {
+          const docPage = previewSource.targetPage ?? 1;
+          setForcedDocumentId(previewSource.documentId);
+          bookPage = getBookPageForCitation(previewSource.documentId, docPage);
+        } else {
+          const parsed = parseInt(previewSource.page ?? "", 10);
+          if (!Number.isNaN(parsed)) bookPage = parsed;
+        }
+        if (typeof bookPage === "number") {
+          setActiveTab(1);
+          setReviewForcedPage(bookPage);
+          setForcedPageNonce((n) => n + 1);
+        }
+        // Dismiss the preview surface but keep the clicked chip highlighted.
+        dismissPreview();
+        return;
+      }
+      // Cross-book citation → fall through to the overlay preview.
+    }
+    if (!overlayOpenRef.current) {
       handleExpandRef.current();
     }
-  }, [previewSource]);
+  }, [previewSource, previewContext, dismissPreview, id]);
 
   return (
     <Box sx={{ display: "flex", height: "100%", overflow: "hidden", background: "radial-gradient(125.08% 101.36% at 0% 0%, var(--lens-semantic-color-background-base-gradient-start, #f9f9fc) 30.53%, var(--lens-semantic-color-background-base-gradient-end, #fcfcff) 100%)" }}>
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", pl: "32px", pr: sidenavOpen ? "12px" : "32px", transition: "padding-right 0.3s ease" }}>
         {/* Page header */}
         <Box sx={{ position: "relative" }}>
-          <Box sx={{ pl: "32px", pr: sidenavOpen ? 0 : "32px", pt: "16px", pb: "0", transition: "padding-right 0.3s ease" }}>
+          <Box sx={{ pt: "24px", pb: "0" }}>
             {/* Breadcrumb */}
             <Stack direction="row" alignItems="center" gap="6px" sx={{ mb: "8px" }}>
               <Typography
@@ -845,15 +942,27 @@ export default function BookEditorPage() {
 
             {/* Title + actions */}
             <Stack direction="row" alignItems="center" gap="10px" sx={{ mb: "12px" }}>
-              <Typography sx={{ fontSize: "22px", fontWeight: 700, lineHeight: 1.4, color: color.type.default.value, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <Typography sx={{ fontSize: "24px", fontWeight: 600, lineHeight: "32px", color: color.type.default.value, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {book.title}
               </Typography>
               <Chip
-                label={book.documentStatus}
+                label={book.status === "Published" ? "Published" : "Draft"}
                 size="small"
-                sx={{ height: "22px", fontSize: "12px", fontWeight: 600, backgroundColor: color.surface.variant.value }}
+                sx={{
+                  height: "22px",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  backgroundColor:
+                    book.status === "Published"
+                      ? "rgb(236, 240, 255)"
+                      : color.surface.variant.value,
+                }}
               />
-              <Button variant="contained" sx={{ fontWeight: 600, fontSize: "16px", minWidth: "90px", ml: "auto" }}>Publish</Button>
+              {book.status === "Published" ? (
+                <Button variant="outlined" sx={{ fontWeight: 600, fontSize: "16px", minWidth: "90px", ml: "auto" }}>Unpublish</Button>
+              ) : (
+                <Button variant="contained" sx={{ fontWeight: 600, fontSize: "16px", minWidth: "90px", ml: "auto" }}>Publish</Button>
+              )}
               {!sidenavOpen && (
                 <Button
                   variant="outlined"
@@ -887,8 +996,8 @@ export default function BookEditorPage() {
             </Stack>
           </Box>
 
-          {/* Tabs — divider stays within 32px horizontal margins */}
-          <Box sx={{ ml: "32px", mr: sidenavOpen ? 0 : "32px", transition: "margin-right 0.3s ease" }}>
+          {/* Tabs */}
+          <Box>
             <Tabs
               value={activeTab}
               onChange={(_, v) => setActiveTab(v)}
@@ -913,11 +1022,12 @@ export default function BookEditorPage() {
         </Box>
 
         {/* Tab content — shared container for both tabs */}
-        <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", pt: "12px" }}>
-          {activeTab === 0 && <BuildBookTab bookTitle={book.title} />}
+        <Box sx={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", pt: "16px" }}>
+          {activeTab === 0 && <BuildBookTab bookTitle={book.title} bookId={book.id} />}
           {activeTab === 1 && (
             <ReviewBookTab
               bookTitle={book.title}
+              bookId={book.id}
               assistOpen={sidenavOpen || overlayOpen}
               forcedPage={reviewForcedPage}
               forcedPageNonce={forcedPageNonce}

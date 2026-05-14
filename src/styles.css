@@ -7,14 +7,45 @@ atlas-gn-app-switcher {
   display: none !important;
 }
 
-/* Global nav menu item label size: force 14px across top-level, tree, and AI nav lists.
-   Atlas defines these props on `.lens-theme`; overriding there beats the cascade. */
+/* Theme scope: this prototype runs on Atlas Light. AtlasThemeProvider applies
+   `lens-theme atlas-light-tokens` on the same wrapper. The global-nav web
+   components live at <body> level under .lens-theme (outside the React tree's
+   .atlas-light-tokens scope), so font-family overrides have to apply at the
+   `.lens-theme` layer to reach the left app nav. We mirror them on
+   `.atlas-light-tokens` to also override the Atlas-Light layer. */
+
+/* Global nav menu item label size: force 14px across top-level, tree, and AI nav lists. */
 .lens-theme,
-:root {
+.atlas-light-tokens {
   --lens-component-global-nav-list-item-font-size: 14px !important;
   --lens-component-global-nav-list-tree-item-font-size: 14px !important;
   --lens-component-global-nav-list-section-title-font-size: 14px !important;
   --lens-component-global-nav-ai-side-nav-list-item-font-size: 14px !important;
+}
+
+/* Atlas font-family update: latest Atlas Light ships Inter Variable for the
+   Semantic / Typography / Text / Body / Font chain. The locally installed
+   bundle still resolves these family tokens to Plus Jakarta Sans, so we
+   override the family primitives + the text-body family pointer at every
+   layer the cascade may read from (`.lens-theme` base, `.atlas-light-tokens`
+   overlay, and `:root` for any host that ends up outside both). */
+.lens-theme,
+.atlas-light-tokens,
+:root {
+  --lens-semantic-font-family-body: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --lens-semantic-font-family-title: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --lens-semantic-font-family-label: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --lens-core-font-family-plus-jakarta-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --lens-core-font-family-inter: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body,
+.AtlasPrototypeAppLayout,
+[data-atlas-gn-app],
+atlas-gn-app,
+atlas-gn-side-nav,
+atlas-gn-top-bar {
+  font-family: var(--lens-semantic-font-family-body);
 }
 
 /* Collapsed side nav: 64px wide */
@@ -46,4 +77,18 @@ mock-hb-global-navigator {
     var(--lens-semantic-color-background-base-gradient-start, #fff) 30.53%,
     var(--lens-semantic-color-background-base-gradient-end, #fff) 100%
   );
+}
+
+/* Book reader route: hide the global header + left side nav so the book
+   viewer's own header is the only top nav. */
+body.book-reader-route mock-hb-global-navigator {
+  display: none !important;
+}
+body.book-reader-route [data-atlas-gn-app] {
+  height: 100dvh;
+  border-top-left-radius: 0;
+  margin-inline-start: 0 !important;
+}
+body.book-reader-route .AtlasPrototypeAppLayout > * {
+  margin-inline-start: 0 !important;
 }

@@ -6,8 +6,10 @@ import CollapseListIcon from "@diligentcorp/atlas-react-bundle/icons/CollapseLis
 
 import {
   smartSummarySections,
+  smartSummarySources,
   smartPrepInsights,
   smartRiskFindings,
+  type Source,
 } from "../data/mockData.js";
 import {
   SUMMARY_SECTION_IDS,
@@ -16,6 +18,21 @@ import {
   prepInsightId,
   riskFindingId,
 } from "./InsightDetailViews.js";
+import { useCitationPreview } from "../context/CitationPreviewContext.js";
+
+/** Unique documents cited by a Smart Summary paragraph, in citation order. */
+function citedSources(text: string): Source[] {
+  const seen = new Set<number>();
+  const out: Source[] = [];
+  for (const m of text.matchAll(/\[(\d+)\]/g)) {
+    const src = smartSummarySources.find((s) => s.index === parseInt(m[1], 10));
+    if (src && !seen.has(src.index)) {
+      seen.add(src.index);
+      out.push(src);
+    }
+  }
+  return out;
+}
 
 const INSIGHT_LABELS: Record<"summary" | "prep" | "risk", string> = {
   summary: "Smart Summary",
@@ -157,6 +174,7 @@ function SummaryTOC({ activeId, onSelect }: { activeId: string | null; onSelect:
   const [detailedOpen, setDetailedOpen] = useState(true);
   const [openCards, setOpenCards] = useState<Record<number, boolean>>({});
   const [allOpen, setAllOpen] = useState(true);
+  const { openCitation, activeChipId } = useCitationPreview();
 
   const toggleAll = () => {
     const next = !allOpen;
@@ -231,14 +249,28 @@ function SummaryTOC({ activeId, onSelect }: { activeId: string | null; onSelect:
                   {card.paragraphs.map((p, pIdx) => {
                     if (!p.label) return null;
                     const paragraphAnchor = summaryParagraphId(sectionIdx, cardIdx, pIdx);
+                    const docs = citedSources(p.text);
                     return (
-                      <TOCItem
-                        key={pIdx}
-                        label={p.label}
-                        active={activeId === paragraphAnchor}
-                        depth={2}
-                        onClick={() => onSelect(paragraphAnchor)}
-                      />
+                      <Box key={pIdx}>
+                        <TOCItem
+                          label={p.label}
+                          active={activeId === paragraphAnchor}
+                          depth={2}
+                          onClick={() => onSelect(paragraphAnchor)}
+                        />
+                        {docs.map((src) => {
+                          const chipId = `summary-toc-doc-${src.index}`;
+                          return (
+                            <TOCItem
+                              key={src.index}
+                              label={src.title}
+                              active={activeChipId === chipId}
+                              depth={3}
+                              onClick={() => openCitation(src, chipId, src.targetPage, "insight")}
+                            />
+                          );
+                        })}
+                      </Box>
                     );
                   })}
                 </Stack>

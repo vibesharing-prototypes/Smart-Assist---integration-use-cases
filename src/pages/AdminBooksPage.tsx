@@ -18,10 +18,8 @@ import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
 import SearchIcon from "@diligentcorp/atlas-react-bundle/icons/Search";
 import SortIcon from "@diligentcorp/atlas-react-bundle/icons/Sort";
 import ExpandDownIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandDown";
-import BookIcon from "@diligentcorp/atlas-react-bundle/icons/Book";
-import BookPublishIcon from "@diligentcorp/atlas-react-bundle/icons/BookPublish";
-import BookUnpublishIcon from "@diligentcorp/atlas-react-bundle/icons/BookUnpublish";
 
+import { BookStateIcon } from "../components/BookStateIcons.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import { type AdminBook, type AdminBookStatus, adminBooks } from "../data/mockData.js";
@@ -33,12 +31,10 @@ const COL = {
   titleMin: 240,
   status: 100,
   meetingDate: 105,
-  committee: 160,
+  committee: 240,
   lastUpdated: 99,
   actions: 64,
 } as const;
-
-const SURFACE_VARIANT_SUBTLE = "#F9F9FC";
 
 const STATUS_COLORS: Record<AdminBookStatus, { bg: string; fg: string }> = {
   Published: { bg: "#E4F3FF", fg: "#004C6C" },
@@ -124,14 +120,6 @@ function BodyCell({
   );
 }
 
-// ─── Status icon picker ───────────────────────────────────────────────────────
-
-function BookStatusIcon({ status }: { status: AdminBookStatus }) {
-  if (status === "Published") return <BookPublishIcon size="md" />;
-  if (status === "Unpublished") return <BookUnpublishIcon size="md" />;
-  return <BookIcon size="md" />;
-}
-
 // ─── Status indicator picker ──────────────────────────────────────────────────
 
 function BookStatusBadge({ status }: { status: AdminBookStatus }) {
@@ -178,12 +166,8 @@ function BookRow({
     <Stack
       direction="row"
       alignItems="stretch"
-      onClick={() => navigate(`/admin/books/${book.id}`)}
       sx={{
-        cursor: "pointer",
         borderBottom: isLast ? "none" : `1px solid ${color.ui.divider.default.value}`,
-        transition: "background-color 0.12s",
-        "&:hover": { backgroundColor: color.surface.variant.value },
       }}
     >
       {/* Title */}
@@ -203,9 +187,12 @@ function BookRow({
               color: color.type.muted.value,
             }}
           >
-            <BookStatusIcon status={book.status} />
+            <BookStateIcon status={book.status} />
           </Box>
           <Typography
+            component="button"
+            type="button"
+            onClick={() => navigate(`/admin/books/${book.id}`)}
             sx={{
               fontSize: "14px",
               fontWeight: 600,
@@ -214,6 +201,14 @@ function BookRow({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              textAlign: "left",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              textDecoration: "none",
+              "&:hover": { textDecoration: "underline" },
+              "&:focus-visible": { outline: "2px solid #1C4EE4", outlineOffset: "2px", borderRadius: "2px" },
             }}
           >
             {book.title}
@@ -242,9 +237,6 @@ function BookRow({
                 flex: 1,
                 fontSize: "14px",
                 color: color.type.muted.value,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
               }}
             >
               {book.committees[0]}
@@ -340,9 +332,9 @@ export default function AdminBooksPage() {
           <Typography
             sx={{
               flex: 1,
-              fontSize: "28px",
-              fontWeight: 700,
-              lineHeight: "36px",
+              fontSize: "24px",
+              fontWeight: 600,
+              lineHeight: "32px",
               color: color.type.default.value,
             }}
           >
@@ -418,7 +410,7 @@ export default function AdminBooksPage() {
         {/* Table */}
         <Box
           sx={{
-            backgroundColor: SURFACE_VARIANT_SUBTLE,
+            backgroundColor: color.surface.variant.value,
             border: `1px solid ${color.ui.divider.default.value}`,
             borderRadius: "16px",
             overflow: "hidden",

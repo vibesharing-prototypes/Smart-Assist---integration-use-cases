@@ -22,7 +22,6 @@ import {
   AIChatMessageFooter,
   AIChatThinkingIndicator,
   AIChatTimestamp,
-  AIDisclaimer,
   useAIChatContext,
 } from "@diligentcorp/atlas-react-bundle";
 
@@ -39,7 +38,6 @@ import ExpandRightIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandRight"
 import DockToRightIcon from "@diligentcorp/atlas-react-bundle/icons/DockToRight";
 import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
 import ReloadIcon from "@diligentcorp/atlas-react-bundle/icons/Reload";
-import InfoIcon from "@diligentcorp/atlas-react-bundle/icons/Info";
 import { InsightsEmptyStateIllustration, SmartSummaryIcon, SmartPrepIcon, SmartRiskScannerIcon } from "./InsightIcons.js";
 import { InsightSummaryView, InsightPrepView, InsightRiskView } from "./InsightDetailViews.js";
 import InsightTOC from "./InsightTOC.js";
@@ -200,6 +198,13 @@ const overlaySuggestions = [
   { category: "Onboard director", prompt: '"Find induction materials and recent board context."' },
 ];
 
+const directorOverlaySuggestions = [
+  { category: "Prepare for my meeting", prompt: '"What should I review before [committee] based on last meeting\'s follow-ups?"' },
+  { category: "Monitor trends", prompt: '"How has [risk / metric / topic] changed across the last [X] board cycles?"' },
+  { category: "Find a past decision", prompt: '"When did the board approve [policy], and what was resolved?"' },
+  { category: "Summarize decisions", prompt: '"Summarize key board decisions and highlights from the past year."' },
+];
+
 // ─── Left panel ───────────────────────────────────────────────────────────────
 
 function LeftPanel({
@@ -210,6 +215,8 @@ function LeftPanel({
   onLoadThread,
   onNewChat,
   showInsights = false,
+  hideInsightsFooter = false,
+  audience = "admin",
   selectedInsight,
   onInsightSelect,
   detailScrollRef,
@@ -221,6 +228,8 @@ function LeftPanel({
   onLoadThread: (thread: ChatThread) => void;
   onNewChat: () => void;
   showInsights?: boolean;
+  hideInsightsFooter?: boolean;
+  audience?: "admin" | "director";
   selectedInsight: "summary" | "prep" | "risk" | null;
   onInsightSelect: (id: "summary" | "prep" | "risk" | null) => void;
   detailScrollRef?: React.RefObject<HTMLElement | null>;
@@ -239,7 +248,7 @@ function LeftPanel({
       }}
     >
       {showInsights && (
-        <Box sx={{ pt: "20px", px: "20px", flexShrink: 0 }}>
+        <Box sx={{ pt: "20px", px: "20px", pb: "12px", flexShrink: 0 }}>
           <Stack direction="row" gap="8px">
             {(["Smart Assist", "Insights"] as const).map((label, i) => {
               const isActive = activeTab === i;
@@ -280,7 +289,7 @@ function LeftPanel({
 
       {activeTab === 1 ? (
         selectedInsight === null ? (
-          <InsightsList onSelect={onInsightSelect} />
+          <InsightsList onSelect={onInsightSelect} audience={audience} />
         ) : (
           <InsightTOC selectedInsight={selectedInsight} onBack={() => onInsightSelect(null)} scrollContainerRef={detailScrollRef} />
         )
@@ -291,7 +300,7 @@ function LeftPanel({
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
-            pt: "24px",
+            pt: showInsights ? "12px" : "24px",
             pl: "20px",
           }}
         >
@@ -371,7 +380,7 @@ function LeftPanel({
         </Box>
       )}
 
-      {activeTab === 1 && (
+      {activeTab === 1 && !hideInsightsFooter && (
         <Box
           sx={({ tokens: { semantic: { color } } }) => ({
             flexShrink: 0,
@@ -423,16 +432,17 @@ function LeftPanel({
 
 // ─── Prompt suggestion cards ──────────────────────────────────────────────────
 
-function OverlaySuggestionCards({ onSelect }: { onSelect: (prompt: string) => void }) {
+function OverlaySuggestionCards({ onSelect, audience = "admin" }: { onSelect: (prompt: string) => void; audience?: "admin" | "director" }) {
   const { tokens: { semantic: { color, radius } } } = useTheme();
+  const cards = audience === "director" ? directorOverlaySuggestions : overlaySuggestions;
 
   return (
     <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", width: "100%" }}>
-      {overlaySuggestions.map((card) => (
+      {cards.map((card) => (
         <Box
           key={card.category}
           component="button"
-          onClick={() => onSelect(card.prompt)}
+          onClick={() => onSelect(card.prompt.replace(/["“”]/g, ""))}
           sx={{
             all: "unset",
             boxSizing: "border-box",
@@ -477,21 +487,35 @@ function OverlaySuggestionCards({ onSelect }: { onSelect: (prompt: string) => vo
 
 // ─── Insights panel ───────────────────────────────────────────────────────────
 
-const INSIGHT_ITEMS = [
+const INSIGHT_ITEMS_ADMIN = [
   { id: "summary" as const, Icon: SmartSummaryIcon, label: "Smart Summary", desc: "Create and read an accurate executive summary" },
   { id: "prep" as const, Icon: SmartPrepIcon, label: "Smart Prep", desc: "Prepare smarter with suggested discussion topics" },
   { id: "risk" as const, Icon: SmartRiskScannerIcon, label: "Smart Risk Scanner", desc: "Identify potential business risks" },
 ];
 
-function InsightsList({ onSelect }: { onSelect: (id: "summary" | "prep" | "risk") => void }) {
-  const { tokens: { semantic: { color } } } = useTheme();
+const INSIGHT_ITEMS_DIRECTOR = [
+  { id: "summary" as const, Icon: SmartSummaryIcon, label: "Smart Summary", desc: "Read a summary before or after reviewing materials" },
+  { id: "prep" as const, Icon: SmartPrepIcon, label: "Smart Prep", desc: "Prepare confidently with suggested discussion topics and questions" },
+  { id: "risk" as const, Icon: SmartRiskScannerIcon, label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+];
+
+function InsightsList({ onSelect, audience = "admin" }: { onSelect: (id: "summary" | "prep" | "risk") => void; audience?: "admin" | "director" }) {
+  const { tokens: { semantic: { color, fontWeight }, core: { spacing } } } = useTheme();
+  const items = audience === "director" ? INSIGHT_ITEMS_DIRECTOR : INSIGHT_ITEMS_ADMIN;
   return (
-    <Box sx={{ flex: 1, overflowY: "auto", px: "24px", pt: "24px", pb: "16px", backgroundColor: "#fff" }}>
-      <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: TEXT_DEFAULT, mb: "16px" }}>
-        AI tools
-      </Typography>
-      <Stack gap="12px">
-        {INSIGHT_ITEMS.map(({ id, Icon, label, desc }) => (
+    <Box sx={{ flex: 1, overflowY: "auto", px: "24px", pt: "12px", pb: "16px", backgroundColor: "#fff" }}>
+      {audience === "director" && (
+        <Stack gap={spacing["1"].value} sx={{ mb: spacing["3"].value }}>
+          <Typography variant="body1" sx={{ fontWeight: fontWeight.emphasis.value, color: TEXT_DEFAULT }}>
+            Your own AI governance advisor: Instant insights for better governance
+          </Typography>
+          <Typography variant="textMd" sx={{ color: color.type.muted.value }}>
+            Insights brings intelligent assistance to streamline the way boards and executives prepare for, participate in, and follow up on meetings. Backed by Diligent's 20+ years of governance expertise and built with enterprise-grade security, sharpen your focus and unlock faster insights with AI-powered governance.
+          </Typography>
+        </Stack>
+      )}
+      <Stack gap="12px" sx={{ mt: audience === "director" ? 0 : spacing["1"].value }}>
+        {items.map(({ id, Icon, label, desc }) => (
           <Box
             key={id}
             component="button"
@@ -516,10 +540,10 @@ function InsightsList({ onSelect }: { onSelect: (id: "summary" | "prep" | "risk"
               <Icon size={24} />
             </Box>
             <Stack gap="4px" sx={{ flex: 1, minWidth: 0 }}>
-              <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: TEXT_DEFAULT }}>
+              <Typography variant="body1" sx={{ fontWeight: fontWeight.emphasis.value, color: TEXT_DEFAULT }}>
                 {label}
               </Typography>
-              <Typography sx={{ alignSelf: "stretch", fontSize: "12px", fontWeight: 400, lineHeight: "16px", letterSpacing: "0.3px", color: color.type.muted.value }}>
+              <Typography variant="textMd" sx={{ alignSelf: "stretch", color: color.type.muted.value }}>
                 {desc}
               </Typography>
             </Stack>
@@ -549,9 +573,20 @@ function InsightsEmptyState() {
           p: "24px",
         }}
       >
-        <Stack alignItems="center" gap="20px" sx={{ width: "688px", maxWidth: "100%" }}>
+        <Stack alignItems="center" gap="48px" sx={{ width: "688px", maxWidth: "100%" }}>
           <InsightsEmptyStateIllustration />
-          <Typography sx={{ width: "100%", textAlign: "center", color: "#282E37", fontSize: "26px", fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 600, lineHeight: "34px" }}>
+          <Typography
+            sx={{
+              width: "100%",
+              textAlign: "center",
+              color: "#282E37",
+              fontFamily: "var(--lens-semantic-font-title-h3-lg-font-family)",
+              fontSize: "var(--lens-semantic-font-title-h3-lg-font-size)",
+              fontWeight: "var(--lens-semantic-font-weight-emphasis)",
+              letterSpacing: "var(--lens-semantic-font-title-h3-lg-letter-spacing)",
+              lineHeight: "var(--lens-semantic-font-title-h3-lg-line-height)",
+            }}
+          >
             Content appears here once you select an AI tool
           </Typography>
         </Stack>
@@ -570,7 +605,7 @@ function InsightDetail({
 }) {
   return (
     <Box ref={scrollRef} sx={{ flex: 1, overflowY: "auto", px: "48px", py: "32px" }}>
-      <Box sx={{ maxWidth: "720px", mx: "auto" }}>
+      <Box sx={{ width: "100%", maxWidth: "916px", mx: "auto" }}>
         {view === "summary" && <InsightSummaryView />}
         {view === "prep" && <InsightPrepView />}
         {view === "risk" && <InsightRiskView />}
@@ -587,11 +622,13 @@ interface SmartAssistOverlayProps {
   onCollapse?: () => void;
   bookTitle?: string;
   showInsights?: boolean;
+  audience?: "admin" | "director";
+  hideInsightsFooter?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitle, showInsights = false }: SmartAssistOverlayProps) {
+export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitle, showInsights = false, audience = "admin", hideInsightsFooter = false }: SmartAssistOverlayProps) {
   // Shared conversation state from context
   const {
     messages,
@@ -611,7 +648,12 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
     setActiveTab,
     selectedInsight,
     setSelectedInsight,
+    setAudience,
   } = useSmartAssist();
+
+  useEffect(() => {
+    setAudience(audience);
+  }, [audience, setAudience]);
 
   // setPrompt is still needed for suggestion card clicks (populate AIChatBox input)
   const { setPrompt } = useAIChatContext();
@@ -692,7 +734,11 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
           </IconButton>
 
           <Typography sx={{ flex: 1, fontSize: "20px", fontWeight: 600, color: TEXT_DEFAULT, lineHeight: "24px" }}>
-            {showInsights ? "GovernAI" : "Smart Assist"}
+            {showInsights
+              ? bookTitle
+                ? `GovernAI – ${bookTitle}`
+                : "GovernAI"
+              : "Smart Assist"}
           </Typography>
 
           <Stack direction="row" gap="16px" alignItems="center">
@@ -732,6 +778,8 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
               onLoadThread={(thread) => loadThread(thread.messages, thread.id)}
               onNewChat={resetChat}
               showInsights={showInsights}
+              hideInsightsFooter={hideInsightsFooter}
+              audience={audience}
               selectedInsight={selectedInsight}
               onInsightSelect={setSelectedInsight}
               detailScrollRef={insightDetailScrollRef}
@@ -745,7 +793,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
               <>
                 {messages.length === 0 ? (
 
-                  <><Box sx={{ flex: 1, overflowY: "auto", display: "flex", alignItems: "center" }}>
+                  <><Box sx={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
                     <Stack
                       sx={{
                         alignItems: "center",
@@ -753,6 +801,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                         py: "48px",
                         width: "100%",
                         gap: "48px",
+                        my: "auto",
                       }}
                     >
                       <Typography
@@ -774,7 +823,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                           onStop={() => {}}
                           isUploadAvailable={false}
                           leadingActions={<SourcesFilterButton sources={sources} onToggle={handleToggleSource} />}
-                          sx={{ "& .MuiInputBase-input": { padding: "16px 24px 12px" } }}
+                          sx={{ "& .MuiInputBase-input": { padding: "16px 24px 12px", fontSize: "14px !important" } }}
                           slotProps={{
                             textField: {
                               placeholder: "Ask me anything about your board materials",
@@ -793,11 +842,11 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                           </Typography>
                         </Stack>
 
-                        <OverlaySuggestionCards onSelect={(p) => setPrompt(p)} />
+                        <OverlaySuggestionCards onSelect={(p) => setPrompt(p)} audience={audience} />
 
                         <Box
                           component="button"
-                          onClick={() => setPrompt(ONBOARDING_PROMPT)}
+                          onClick={() => handleSend(ONBOARDING_PROMPT)}
                           sx={({ tokens: { semantic: { color } } }) => ({
                             all: "unset",
                             boxSizing: "border-box",
@@ -810,12 +859,12 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                             px: "16px",
                             height: "56px",
                             borderRadius: "12px",
-                            backgroundColor: color.accent.blue.background.value,
+                            backgroundColor: color.surface.default.value,
                             border: `1px solid ${PANEL_DIVIDER}`,
                             width: "fit-content",
                             mx: "auto",
                             transition: "background-color 0.15s ease",
-                            "&:hover": { filter: "brightness(0.96)" },
+                            "&:hover": { backgroundColor: color.surface.variant.value },
                           })}
                         >
                           <Box
@@ -839,32 +888,6 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                       </Box>
                     </Stack>
                   </Box>
-
-                  <Button
-                    variant="text"
-                    size="small"
-                    startIcon={<InfoIcon size="md" />}
-                    sx={{
-                      position: "absolute",
-                      bottom: "24px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      color: "var(--Color-Action-Secondary-On-secondary, #242628)",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      lineHeight: "20px",
-                      letterSpacing: "0.14px",
-                      px: "12px",
-                      py: "4px",
-                      borderRadius: "8px",
-                      textTransform: "none",
-                      whiteSpace: "nowrap",
-                      "& .MuiButton-startIcon": { mr: "4px", color: "inherit" },
-                      "&:hover": { backgroundColor: "rgba(36,38,40,0.06)" },
-                    }}
-                  >
-                    Learn about data privacy
-                  </Button>
                   </>
 
                 ) : (
@@ -885,9 +908,14 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                                   message={msg.content}
                                   header={
                                     <AIChatMessageHeader
-                                      name="Jane Doe"
+                                      name={audience === "director" ? "Josh Doe" : "Jane Doe"}
                                       time={msg.timestamp}
-                                      avatar={<AIChatMessageAvatar uniqueId="jane-doe" initials="JD" />}
+                                      avatar={
+                                        <AIChatMessageAvatar
+                                          uniqueId={audience === "director" ? "josh-doe" : "jane-doe"}
+                                          initials="JD"
+                                        />
+                                      }
                                       slotProps={{ root: { sx: { flexDirection: "row-reverse" } } }}
                                     />
                                   }
@@ -949,7 +977,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                           onStop={() => {}}
                           isUploadAvailable={false}
                           leadingActions={<SourcesFilterButton sources={sources} onToggle={handleToggleSource} />}
-                          sx={{ "& .MuiInputBase-input": { padding: "16px 24px 12px" } }}
+                          sx={{ "& .MuiInputBase-input": { padding: "16px 24px 12px", fontSize: "14px !important" } }}
                           slotProps={{
                             textField: { placeholder: "Ask me anything about your board materials" },
                           }}

@@ -10,9 +10,12 @@ import {
   type ChatThread,
   STATIC_CHAT_THREADS,
   CONVERSATION_VARIANTS,
+  DIRECTOR_CONVERSATION_VARIANTS,
   ONBOARDING_PROMPT,
   ONBOARDING_RICH_BLOCKS,
 } from "../data/hybrid-search.constants.js";
+
+export type SmartAssistAudience = "admin" | "director";
 
 // ─── Context shape ────────────────────────────────────────────────────────────
 
@@ -26,11 +29,12 @@ interface SmartAssistContextValue {
   overlayOpen: boolean;
   openPanel: () => void;
   openSmartAssist: () => void;
+  openInBook: () => void;
   closePanel: () => void;
   closeOverlay: () => void;
   expandToOverlay: () => void;
   collapseToPanel: () => void;
-  handleSend: (text: string) => void;
+  handleSend: (text: string, opts?: { newSession?: boolean }) => void;
   handleToggleSource: (id: string) => void;
   resetChat: () => void;
   loadThread: (messages: ChatMessage[], threadId?: string) => void;
@@ -44,6 +48,8 @@ interface SmartAssistContextValue {
   setActiveTab: (v: number) => void;
   selectedInsight: "summary" | "prep" | "risk" | null;
   setSelectedInsight: (v: "summary" | "prep" | "risk" | null) => void;
+  audience: SmartAssistAudience;
+  setAudience: (v: SmartAssistAudience) => void;
 }
 
 const SmartAssistContext = createContext<SmartAssistContextValue | null>(null);
@@ -65,12 +71,23 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sources, setSources] = useState<Source[]>(INITIAL_SOURCES);
   const [variantIndex, setVariantIndex] = useState(0);
+  const [audience, setAudienceState] = useState<SmartAssistAudience>("admin");
+  const audienceRef = useRef<SmartAssistAudience>("admin");
+  audienceRef.current = audience;
+  const setAudience = (v: SmartAssistAudience) => {
+    setAudienceState((prev) => {
+      if (prev !== v) setVariantIndex(0);
+      return v;
+    });
+  };
   const [panelOpen, setPanelOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
-  // Session-only preference for how Smart Assist opens outside a book.
-  // Defaults to overlay; flips to "panel" if the user collapses, and back
-  // to "overlay" if they expand. Resets on page refresh.
-  const [preferredMode, setPreferredMode] = useState<"overlay" | "panel">("overlay");
+  // Session-only preference for how Smart Assist opens. `null` means the user
+  // hasn't picked a mode yet, so each surface falls back to its own default
+  // (overlay outside a book, panel inside a book). Once the user expands or
+  // collapses, the explicit choice is remembered everywhere — including the
+  // book — until the page is refreshed.
+  const [preferredMode, setPreferredMode] = useState<"overlay" | "panel" | null>(null);
   const [userThreads, setUserThreads] = useState<ChatThread[]>([]);
   const [chatTimestamp, setChatTimestamp] = useState<string | null>(null);
   const [threadSplitIndex, setThreadSplitIndex] = useState<number | null>(null);
@@ -106,15 +123,24 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
     }
   }, [messages.length, isGenerating, currentThreadId]);
 
-  const handleSend = (text: string) => {
+  const handleSend = (text: string, opts?: { newSession?: boolean }) => {
     hasInteractedWithThread.current = true;
+    // Sending a message is always a chat action — make sure Smart Assist is on
+    // the chat tab so the response is visible, not stuck on the Insights tab
+    // (e.g. after opening a Smart Summary earlier this session).
+    setActiveTab(0);
+    setSelectedInsight(null);
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: "user",
       content: text,
       timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
     };
-    if (messages.length === 0) {
+    // `newSession` forces a fresh thread even if a previous conversation is
+    // still in state — used by the home-page widget, which is always a new
+    // chat entry point regardless of what was open before.
+    const startNew = opts?.newSession || messages.length === 0;
+    if (startNew) {
       // New chat: auto-create thread, date shown at top
       const now = new Date().toISOString();
       setChatTimestamp(formatChatDate(now));
@@ -132,12 +158,15 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
         setThreadLastActivity((prev) => ({ ...prev, [currentThreadId]: new Date().toISOString() }));
       }
     }
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => (startNew ? [userMsg] : [...prev, userMsg]));
     setPrompt("");
     setIsGenerating(true);
 
     const isOnboarding = text.trim() === ONBOARDING_PROMPT;
-    const responseVariant = CONVERSATION_VARIANTS[variantIndex];
+    const variantPool = audienceRef.current === "director"
+      ? DIRECTOR_CONVERSATION_VARIANTS
+      : CONVERSATION_VARIANTS;
+    const responseVariant = variantPool[variantIndex % variantPool.length];
 
     setTimeout(() => {
       setMessages((prev) => [
@@ -151,7 +180,7 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
           timestamp: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
         },
       ]);
-      if (!isOnboarding) setVariantIndex((i) => (i + 1) % CONVERSATION_VARIANTS.length);
+      if (!isOnboarding) setVariantIndex((i) => (i + 1) % variantPool.length);
       setIsGenerating(false);
     }, 1800);
   };
@@ -168,8 +197,14 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
         overlayOpen,
         openPanel: () => setPanelOpen(true),
         openSmartAssist: () => {
+          // Outside a book: default to overlay unless the user chose panel.
           if (preferredMode === "panel") setPanelOpen(true);
           else setOverlayOpen(true);
+        },
+        openInBook: () => {
+          // Inside a book: default to the docked panel unless the user chose overlay.
+          if (preferredMode === "overlay") setOverlayOpen(true);
+          else setPanelOpen(true);
         },
         closePanel: () => setPanelOpen(false),
         closeOverlay: () => setOverlayOpen(false),
@@ -205,6 +240,8 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
         setActiveTab,
         selectedInsight,
         setSelectedInsight,
+        audience,
+        setAudience,
       }}
     >
       {children}

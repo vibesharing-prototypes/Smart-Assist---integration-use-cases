@@ -50,6 +50,8 @@ export default function AIAssistantPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // Shared secret matched against API_SHARED_SECRET on the server.
+          'x-api-secret': import.meta.env.VITE_API_SECRET ?? '',
         },
         body: JSON.stringify({
           message: input,

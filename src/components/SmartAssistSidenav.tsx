@@ -21,12 +21,12 @@ import {
   AIChatMessageFooter,
   AIChatThinkingIndicator,
   AIChatTimestamp,
-  AIDisclaimer,
 } from "@diligentcorp/atlas-react-bundle";
 
 import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
 import { SmartSummaryIcon, SmartPrepIcon, SmartRiskScannerIcon } from "./InsightIcons.js";
 import { InsightSummaryView, InsightPrepView, InsightRiskView } from "./InsightDetailViews.js";
+import { AiBadge, AiInaccuracyDisclaimer } from "./AiDisclaimers.js";
 import AddCircleIcon from "@diligentcorp/atlas-react-bundle/icons/AddCircle";
 import ArrowLeftIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowLeft";
 import ArrowUpIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowUp";
@@ -36,8 +36,8 @@ import FullscreenIcon from "@diligentcorp/atlas-react-bundle/icons/Fullscreen";
 import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
 import ReloadIcon from "@diligentcorp/atlas-react-bundle/icons/Reload";
 
-import { type SuggestionCard, suggestionCards } from "../data/mockData.js";
-import { type ChatThread } from "../data/hybrid-search.constants.js";
+import { type SuggestionCard, suggestionCards, directorSuggestionCards } from "../data/mockData.js";
+import { type ChatThread, ONBOARDING_PROMPT } from "../data/hybrid-search.constants.js";
 import RichAIMessageContent, { parseCiteText } from "./RichAIMessageContent.js";
 import SourcesBlock from "./SourcesBlock.js";
 import SourcesFilterButton from "./SourcesFilterButton.js";
@@ -79,7 +79,7 @@ function SuggestionCards({
           <Box
             key={card.prompt}
             component="button"
-            onClick={() => onSelect(card.prompt)}
+            onClick={() => onSelect(card.prompt.replace(/["“”]/g, ""))}
             sx={{
               all: "unset",
               boxSizing: "border-box",
@@ -131,6 +131,8 @@ interface SmartAssistSidenavProps {
   title?: string;
   variant?: "temporary" | "persistent";
   showInsights?: boolean;
+  audience?: "admin" | "director";
+  hideInsightsFooter?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -143,8 +145,10 @@ export default function SmartAssistSidenav({
   title = "Smart Assist",
   variant = "temporary",
   showInsights = false,
+  audience = "admin",
+  hideInsightsFooter = false,
 }: SmartAssistSidenavProps) {
-  const { tokens: { semantic: { color, radius } } } = useTheme();
+  const { tokens: { semantic: { color, radius, fontWeight }, core: { spacing } } } = useTheme();
   const {
     messages,
     sources,
@@ -163,7 +167,12 @@ export default function SmartAssistSidenav({
     setActiveTab,
     selectedInsight,
     setSelectedInsight,
+    setAudience,
   } = useSmartAssist();
+
+  useEffect(() => {
+    setAudience(audience);
+  }, [audience, setAudience]);
 
   const [smartAssistView, setSmartAssistView] = useState<"new-chat" | "thread-list">("new-chat");
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
@@ -376,7 +385,21 @@ export default function SmartAssistSidenav({
           <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={handleSubheaderBack} title="Back">
             <ArrowLeftIcon size="lg" />
           </IconButton>
-          <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", color: color.type.default.value }}>
+          <Typography
+            sx={{
+              fontSize: "14px",
+              fontWeight: 600,
+              lineHeight: "20px",
+              color: color.type.default.value,
+              flex: 1,
+              minWidth: 0,
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              overflow: "hidden",
+              overflowWrap: "anywhere",
+            }}
+          >
             {subheaderLabel}
           </Typography>
         </Stack>
@@ -399,7 +422,7 @@ export default function SmartAssistSidenav({
           }}
         >
           {!chatStarted ? (
-            <Box sx={{ height: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", pb: "16px" }}>
+            <Box sx={{ minHeight: "100%", display: "flex", flexDirection: "column", justifyContent: "flex-end", pb: "16px" }}>
               <Typography
                 sx={{
                   fontSize: "18px",
@@ -413,9 +436,49 @@ export default function SmartAssistSidenav({
                 How can I assist you?
               </Typography>
               <SuggestionCards
-                cards={suggestionCards}
+                cards={audience === "director" ? directorSuggestionCards : suggestionCards}
                 onSelect={(p) => setPrompt(p)}
               />
+              <Box
+                component="button"
+                onClick={() => handleSend(ONBOARDING_PROMPT)}
+                sx={{
+                  all: "unset",
+                  boxSizing: "border-box",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  mt: "10px",
+                  mx: "4px",
+                  px: "16px",
+                  height: "56px",
+                  borderRadius: radius.lg.value,
+                  backgroundColor: color.surface.default.value,
+                  border: `1px solid ${color.ui.divider.default.value}`,
+                  transition: "background-color 0.15s ease",
+                  "&:hover": { backgroundColor: color.surface.variant.value },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    border: "1.5px solid #004c6c",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#004c6c", lineHeight: 1 }}>?</Typography>
+                </Box>
+                <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#004c6c", lineHeight: "16px", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                  New to Smart Assist? Ask me what I can help you with.
+                </Typography>
+              </Box>
             </Box>
           ) : (
             <Box sx={{ "& .AtlasAIChatUserMessage .MuiTypography-body1": { fontSize: "14px !important" }, "& li": { fontSize: "14px" } }}>
@@ -432,9 +495,14 @@ export default function SmartAssistSidenav({
                       message={msg.content}
                       header={
                         <AIChatMessageHeader
-                          name="Jane Doe"
+                          name={audience === "director" ? "Josh Doe" : "Jane Doe"}
                           time={msg.timestamp}
-                          avatar={<AIChatMessageAvatar uniqueId="jane-doe" initials="JD" />}
+                          avatar={
+                            <AIChatMessageAvatar
+                              uniqueId={audience === "director" ? "josh-doe" : "jane-doe"}
+                              initials="JD"
+                            />
+                          }
                           slotProps={{ root: { sx: { flexDirection: "row-reverse" } } }}
                         />
                       }
@@ -546,15 +614,29 @@ export default function SmartAssistSidenav({
             background: THREAD_BG,
           }}
         >
-          <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value, mb: "16px" }}>
-            AI tools
-          </Typography>
-          <Stack gap="12px">
-            {([
-              { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Create and read an accurate executive summary" },
-              { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare smarter with suggested discussion topics" },
-              { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
-            ] as const).map(({ Icon, id, label, desc }) => (
+          {audience === "director" && (
+            <Stack gap={spacing["1"].value} sx={{ mb: spacing["3"].value }}>
+              <Typography variant="body1" sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}>
+                Your own AI governance advisor: Instant insights for better governance
+              </Typography>
+              <Typography variant="textMd" sx={{ color: color.type.muted.value }}>
+                Insights brings intelligent assistance to streamline the way boards and executives prepare for, participate in, and follow up on meetings. Backed by Diligent's 20+ years of governance expertise and built with enterprise-grade security, sharpen your focus and unlock faster insights with AI-powered governance.
+              </Typography>
+            </Stack>
+          )}
+          <Stack gap="12px" sx={{ mt: audience === "director" ? 0 : spacing["1"].value }}>
+            {(audience === "director"
+              ? ([
+                  { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Read a summary before or after reviewing materials" },
+                  { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare confidently with suggested discussion topics and questions" },
+                  { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+                ] as const)
+              : ([
+                  { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Create and read an accurate executive summary" },
+                  { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare smarter with suggested discussion topics" },
+                  { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+                ] as const)
+            ).map(({ Icon, id, label, desc }) => (
               <Box
                 key={label}
                 component="button"
@@ -579,10 +661,10 @@ export default function SmartAssistSidenav({
                   <Icon size={24} />
                 </Box>
                 <Stack gap="4px" sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", letterSpacing: "0.2px", color: color.type.default.value }}>
+                  <Typography variant="body1" sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}>
                     {label}
                   </Typography>
-                  <Typography sx={{ alignSelf: "stretch", fontSize: "12px", fontWeight: 400, lineHeight: "16px", letterSpacing: "0.3px", color: color.type.muted.value }}>
+                  <Typography variant="textMd" sx={{ alignSelf: "stretch", color: color.type.muted.value }}>
                     {desc}
                   </Typography>
                 </Stack>
@@ -612,12 +694,7 @@ export default function SmartAssistSidenav({
             <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value }}>
               Updated: April 23, 2024, 9:03 AM
             </Typography>
-            <Stack direction="row" alignItems="center" gap="4px" sx={{ color: color.type.muted.value }}>
-              <AiSparkleIcon size="md" />
-              <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value }}>
-                Generated by AI
-              </Typography>
-            </Stack>
+            <AiBadge />
           </Stack>
 
           {selectedInsight === "summary" && <InsightSummaryView />}
@@ -627,7 +704,7 @@ export default function SmartAssistSidenav({
       )}
 
       {/* ── Insights footer (Regenerate) ── */}
-      {activeTab === 1 && (
+      {activeTab === 1 && !hideInsightsFooter && (
         <Box
           sx={{
             flexShrink: 0,
@@ -701,6 +778,20 @@ export default function SmartAssistSidenav({
             background: `linear-gradient(90deg, transparent 0%, ${color.ai.default.gradientStart.value} 15%, ${color.ai.default.gradientMiddle.value} 50%, ${color.ai.default.gradientEnd.value} 85%, transparent 100%)`,
           }}
         />
+        {/* Focus-ring wrapper: 2px inset ring drawn via pseudo-element on focus,
+            so it appears around the input area without shifting layout. */}
+        <Box
+          sx={{
+            position: "relative",
+            "&:focus-within::after": {
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              boxShadow: `inset 0 0 0 2px ${color.action.primary.default.value}`,
+            },
+          }}
+        >
         <InputBase
           multiline
           fullWidth
@@ -714,10 +805,8 @@ export default function SmartAssistSidenav({
           }}
           placeholder="Ask me anything about your board materials"
           sx={{
-            fontSize: "14px",
-            lineHeight: "20px",
             color: color.type.default.value,
-            "& .MuiInputBase-input": { padding: "16px 24px 12px !important", height: "80px !important", overflow: "auto !important" },
+            "& .MuiInputBase-input": { padding: "16px 24px 12px !important", height: "80px !important", overflow: "auto !important", fontSize: "14px !important", lineHeight: "20px !important" },
             "& .MuiInputBase-input::placeholder": { color: color.type.muted.value, opacity: 1 },
             alignItems: "flex-start",
           }}
@@ -747,6 +836,7 @@ export default function SmartAssistSidenav({
             <ArrowUpIcon size="md" />
           </IconButton>
         </Box>
+        </Box>
         <Box
           sx={{
             borderTop: `1px solid ${color.ui.divider.default.value}`,
@@ -758,7 +848,7 @@ export default function SmartAssistSidenav({
             "& a": { color: `${color.action.primary.default.value} !important` },
           }}
         >
-          <AIDisclaimer variant="disclosure" learnMore={{ href: "#" }} />
+          <AiInaccuracyDisclaimer />
         </Box>
       </Box>}
     </Drawer>

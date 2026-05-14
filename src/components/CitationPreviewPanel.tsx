@@ -86,7 +86,7 @@ function FallbackDocument({ source, zoomPct }: { source: Source; zoomPct: number
 export default function CitationPreviewPanel() {
   const { tokens: { semantic: { color } } } = useTheme();
   const { previewSource, previewPage, previewContext, setPreviewPage, closeCitation } = useCitationPreview();
-  const { overlayOpen, collapseToPanel, openPanel } = useSmartAssist();
+  const { overlayOpen, collapseToPanel, openPanel, audience } = useSmartAssist();
   const navigate = useNavigate();
 
   const [zoomIndex, setZoomIndex] = useState(2); // 100%
@@ -118,9 +118,17 @@ export default function CitationPreviewPanel() {
     // Close the full-screen overlay but keep the AI panel visible alongside the book.
     if (overlayOpen) collapseToPanel();
     else openPanel();
-    navigate(`/admin/books/${targetDoc.bookId}`, {
-      state: { openTab: "review", documentId, documentPage },
-    });
+    // Route to the audience-appropriate book reader. Works for both chat and
+    // Insight citations.
+    if (audience === "director") {
+      navigate(`/director/books/${targetDoc.bookId}`, {
+        state: { documentId, documentPage },
+      });
+    } else {
+      navigate(`/admin/books/${targetDoc.bookId}`, {
+        state: { openTab: "review", documentId, documentPage },
+      });
+    }
   };
 
   const open = previewSource !== null;
@@ -189,8 +197,8 @@ export default function CitationPreviewPanel() {
               <Button
                 variant="text"
                 size="medium"
-                onClick={previewContext === "insight" ? () => {} : handleOpen}
-                disabled={previewContext === "insight" ? false : !previewSource.documentId}
+                onClick={handleOpen}
+                disabled={!previewSource.documentId}
                 sx={{ flexShrink: 0, fontWeight: 600, whiteSpace: "nowrap" }}
               >
                 Open

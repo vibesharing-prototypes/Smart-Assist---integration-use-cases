@@ -2,16 +2,21 @@ import type { ChatMessage } from "./mockData.js";
 
 // ─── Rich content types ───────────────────────────────────────────────────────
 
-export type Cite = { cite: number };
+// `cite` is the source index used to resolve the document/page for the preview.
+// `label` is the number actually rendered on the chip — when present it lets the
+// same source carry a different visible number at each citation site.
+export type Cite = { cite: number; label?: number };
 export type Span = string | Cite;
 
 export interface RichParagraph { type: "p"; spans: Span[] }
 export interface RichHeader    { type: "h"; text: string }
-export interface RichList      { type: "list"; items: string[] }
+export interface RichList      { type: "list"; items: (string | Span[])[] }
 export interface RichTable {
   type: "table";
   columns: string[];
   rows: Span[][][]; // [row][cell][span]
+  /** If true, every cell uses the default text color (no muted columns). */
+  defaultTextColor?: boolean;
 }
 export type RichBlock = RichParagraph | RichHeader | RichList | RichTable;
 
@@ -56,7 +61,8 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
       },
       {
         type: "table",
-        columns: ["Approval name", "Short description", "Actions"],
+        columns: ["Approval name", "Description", "Actions"],
+        defaultTextColor: true,
         rows: [
           [
             ["Approval of prior board meeting minutes"],
@@ -190,7 +196,8 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
       },
       {
         type: "table",
-        columns: ["Approval name", "Short description", "Actions"],
+        columns: ["Approval name", "Description", "Actions"],
+        defaultTextColor: true,
         rows: [
           [
             ["Approval of prior board meeting minutes"],
@@ -237,6 +244,159 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
         spans: [
           "The same update set out a multi-cycle roadmap with interim updates at the March and June 2025 meetings, a draft framework circulated in September 2025, and the final version presented and approved at the December 10, 2025 meeting.",
           " ", { cite: 10 }, " ", { cite: 8 },
+        ],
+      },
+    ],
+  },
+];
+
+// ─── Director conversation variants ───────────────────────────────────────────
+// Director-side cycle (4 variants) covering an Audit Committee prep flow:
+//   Variant 0 → outstanding follow-ups from last meeting
+//   Variant 1 → CFO Q1 variance recap
+//   Variant 2 → revenue variance comparison across last 3 meetings
+//   Variant 3 → one-paragraph briefing note synthesis
+
+export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
+  // ── Variant 0 — outstanding follow-ups from last AC meeting ──────────────
+  {
+    sources: [
+      { index: 1, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "4", documentId: "minutes-q4-2025", targetPage: 4 },
+      { index: 2, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "5", documentId: "minutes-q4-2025", targetPage: 5 },
+      { index: 3, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "5", documentId: "minutes-q4-2025", targetPage: 5 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Based on the September 18, 2025 Audit Committee meeting minutes, there are three outstanding follow-up items assigned to management:",
+        ],
+      },
+      {
+        type: "table",
+        defaultTextColor: true,
+        columns: ["Follow-up", "Assigned to", "Status"],
+        rows: [
+          [
+            ["Circulate final approved FY2026 budget deck and initiate quarterly variance reporting from Q1 2026", " ", { cite: 1 }],
+            ["CFO"],
+            ["Due Q1 2026 — first update expected at this meeting"],
+          ],
+          [
+            ["Finalize and publish the Incident Response Framework internally", " ", { cite: 2 }],
+            ["CISO / Management"],
+            ["Marked complete per December materials"],
+          ],
+          [
+            ["Schedule tabletop incident response exercise for early 2026", " ", { cite: 3 }],
+            ["CISO"],
+            ["Pending — no confirmed date in materials"],
+          ],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "The CFO report and CISO update in your current pack are the most relevant starting points for each item.",
+        ],
+      },
+    ],
+  },
+
+  // ── Variant 1 — CFO report on Q1 variance ────────────────────────────────
+  {
+    sources: [
+      { index: 1, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+      { index: 2, title: "FY2026 Operating Plan & Budget",  book: "Board Book Q4 2025", page: "4", documentId: "fy2026-plan",            targetPage: 4 },
+      { index: 3, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "The CFO report covers the first quarterly variance update against the approved FY2026 budget:",
+        ],
+      },
+      {
+        type: "list",
+        items: [
+          ["Revenue is tracking 3% below plan for Q1, attributed to delayed enterprise contract renewals in North America. Management notes recovery is expected in Q2.", " ", { cite: 1 }],
+          ["Operating expenses are within budget, with headcount growth slightly behind plan in product and engineering.", " ", { cite: 2 }],
+          ["International expansion costs are running approximately 8% ahead of budget, driven by earlier-than-planned EMEA market entry.", " ", { cite: 3 }],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "Management characterises the overall position as within acceptable variance thresholds, with no reforecast recommended at this stage.",
+        ],
+      },
+    ],
+  },
+
+  // ── Variant 2 — revenue variance compared across last 3 meetings ─────────
+  {
+    sources: [
+      { index: 1, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+      { index: 2, title: "FY2026 Operating Plan & Budget",  book: "Board Book Q4 2025", page: "2", documentId: "fy2026-plan",            targetPage: 2 },
+      { index: 3, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Searching across the last three Audit Committee board packs, the revenue picture appears in each:",
+        ],
+      },
+      {
+        type: "table",
+        defaultTextColor: true,
+        columns: ["Meeting", "What was said", "Status"],
+        rows: [
+          [
+            ["Sep 2025"],
+            ["Softness in enterprise renewals flagged as an emerging risk. Elongated sales cycles in North America noted. No formal variance reportable — FY2026 budget not yet approved.", " ", { cite: 1 }],
+            ["Risk flagged"],
+          ],
+          [
+            ["Dec 2025"],
+            ["Renewal pipeline risk acknowledged. A 2% H1 2026 revenue contingency built in, assuming delayed closures shift to Q2. Board approved the budget with this assumption in the resolution.", " ", { cite: 2 }],
+            ["2% contingency accepted"],
+          ],
+          [
+            ["Mar 2026"],
+            ["Revenue tracking 3% below plan — above the 2% contingency modelled in December. Management's narrative does not explicitly reference the December contingency assumption.", " ", { cite: 3 }],
+            ["−3% actual vs −2% contingency"],
+          ],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "The CFO report and CISO update in your current pack are the most relevant starting points for each item.",
+        ],
+      },
+    ],
+  },
+
+  // ── Variant 3 — one-paragraph briefing note ──────────────────────────────
+  {
+    sources: [
+      { index: 1, title: "CFO Q1 Variance Report",         book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+      { index: 2, title: "FY2026 Operating Plan & Budget", book: "Board Book Q4 2025", page: "3", documentId: "fy2026-plan",            targetPage: 3 },
+      { index: 3, title: "CFO Q1 Variance Report",         book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Here's a draft briefing note — edit before sharing:",
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "The March 2026 Audit Committee meeting is expected to address three outstanding items from the September and December 2025 meetings. On financials, the CFO will present the first Q1 FY2026 variance update: revenue is tracking 3% below plan due to delayed enterprise renewals in North America, above the 2% H1 contingency accepted when the Board approved the budget in December. Operating expenses are within plan and international expansion is running ahead of budget on earlier EMEA entry. On cybersecurity, management is expected to confirm publication of the Incident Response Framework and provide a date for the tabletop exercise committed to in December.",
         ],
       },
     ],

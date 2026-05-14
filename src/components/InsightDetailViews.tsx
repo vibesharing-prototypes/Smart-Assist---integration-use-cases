@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import { AIDisclaimer } from "@diligentcorp/atlas-react-bundle";
 import InfoIcon from "@diligentcorp/atlas-react-bundle/icons/Info";
+
+import { AiInaccuracyDisclaimer } from "./AiDisclaimers.js";
 
 import {
   smartSummarySections,
@@ -16,7 +17,8 @@ import {
   type PrepInsight,
   type RiskFinding,
 } from "../data/mockData.js";
-import RichAIMessageContent, { parseCiteText } from "./RichAIMessageContent.js";
+import RichAIMessageContent, { parseCiteText, type CiteCounter } from "./RichAIMessageContent.js";
+import type { Span } from "../data/hybrid-search.constants.js";
 
 // ─── Shared building blocks ───────────────────────────────────────────────────
 
@@ -37,15 +39,11 @@ function DetailCard({ children }: { children: React.ReactNode }) {
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  const { tokens: { semantic: { color } } } = useTheme();
+  const { tokens: { semantic: { color, fontWeight } } } = useTheme();
   return (
     <Typography
-      sx={{
-        fontSize: "22px",
-        fontWeight: 700,
-        lineHeight: "28px",
-        color: color.type.default.value,
-      }}
+      variant="h4"
+      sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}
     >
       {children}
     </Typography>
@@ -53,15 +51,11 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
-  const { tokens: { semantic: { color } } } = useTheme();
+  const { tokens: { semantic: { color, fontWeight } } } = useTheme();
   return (
     <Typography
-      sx={{
-        fontSize: "18px",
-        fontWeight: 700,
-        lineHeight: "26px",
-        color: color.type.default.value,
-      }}
+      variant="h4"
+      sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}
     >
       {children}
     </Typography>
@@ -69,15 +63,11 @@ function CardTitle({ children }: { children: React.ReactNode }) {
 }
 
 function SubLabel({ children }: { children: React.ReactNode }) {
-  const { tokens: { semantic: { color } } } = useTheme();
+  const { tokens: { semantic: { color, fontWeight } } } = useTheme();
   return (
     <Typography
-      sx={{
-        fontSize: "14px",
-        fontWeight: 600,
-        lineHeight: "20px",
-        color: color.type.default.value,
-      }}
+      variant="body1"
+      sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}
     >
       {children}
     </Typography>
@@ -142,7 +132,7 @@ function FooterDisclaimer({ extra }: { extra?: string }) {
           {extra}
         </Typography>
       )}
-      <AIDisclaimer variant="disclosure" learnMore={{ href: "#" }} />
+      <AiInaccuracyDisclaimer />
     </Stack>
   );
 }
@@ -164,9 +154,12 @@ export const summaryParagraphId = (sectionIdx: number, cardIdx: number, pIdx: nu
 function SummarySectionBlock({
   section,
   sectionIdx,
+  cardSpans,
 }: {
   section: SummarySection;
   sectionIdx: number;
+  /** Precomputed citation spans per paragraph: cardSpans[cardIdx][paragraphIdx]. */
+  cardSpans: (Span[] | null)[][];
 }) {
   const [expanded, setExpanded] = useState(false);
   const sectionAnchorId =
@@ -197,7 +190,7 @@ function SummarySectionBlock({
               <Stack gap="16px">
                 {card.title && <CardTitle>{card.title}</CardTitle>}
                 {visibleParagraphs.map((p, i) => {
-                  const hasCitations = p.text.includes("[");
+                  const citeSpans = cardSpans[idx]?.[i] ?? null;
                   return (
                     <Stack
                       key={i}
@@ -207,7 +200,7 @@ function SummarySectionBlock({
                     >
                       {p.label && <SubLabel>{p.label}</SubLabel>}
                       {p.text && (
-                        hasCitations ? (
+                        citeSpans ? (
                           <Box
                             sx={({ tokens: { semantic: { color } } }) => ({
                               fontSize: "14px",
@@ -216,7 +209,7 @@ function SummarySectionBlock({
                             })}
                           >
                             <RichAIMessageContent
-                              blocks={[{ type: "p", spans: parseCiteText(p.text) }]}
+                              blocks={[{ type: "p", spans: citeSpans }]}
                               sources={smartSummarySources}
                               messageId={`summary-${sectionIdx}-${idx}-${i}`}
                               previewContext="insight"
@@ -251,11 +244,21 @@ function SummarySectionBlock({
 }
 
 export function InsightSummaryView() {
+  // One counter for the whole tab so every citation chip gets a unique number,
+  // even when multiple chips resolve to the same source document/page.
+  const counter: CiteCounter = { n: 0 };
   return (
     <Stack gap="32px">
-      {smartSummarySections.map((s, i) => (
-        <SummarySectionBlock key={s.title} section={s} sectionIdx={i} />
-      ))}
+      {smartSummarySections.map((s, i) => {
+        const cardSpans = s.cards.map((card) =>
+          card.paragraphs.map((p) =>
+            p.text && p.text.includes("[") ? parseCiteText(p.text, counter) : null,
+          ),
+        );
+        return (
+          <SummarySectionBlock key={s.title} section={s} sectionIdx={i} cardSpans={cardSpans} />
+        );
+      })}
       <FooterDisclaimer />
     </Stack>
   );
@@ -265,7 +268,7 @@ export function InsightSummaryView() {
 
 export const prepInsightId = (n: number) => `insight-prep-${n}`;
 
-function PrepInsightCard({ insight }: { insight: PrepInsight }) {
+function PrepInsightCard({ insight, rationaleSpans }: { insight: PrepInsight; rationaleSpans: Span[] }) {
   return (
     <Box id={prepInsightId(insight.number)} sx={{ scrollMarginTop: "32px" }}>
     <DetailCard>
@@ -284,7 +287,7 @@ function PrepInsightCard({ insight }: { insight: PrepInsight }) {
             })}
           >
             <RichAIMessageContent
-              blocks={[{ type: "p", spans: parseCiteText(insight.rationale) }]}
+              blocks={[{ type: "p", spans: rationaleSpans }]}
               sources={smartPrepSources}
               messageId={`prep-rationale-${insight.number}`}
               previewContext="insight"
@@ -313,10 +316,15 @@ function PrepInsightCard({ insight }: { insight: PrepInsight }) {
 }
 
 export function InsightPrepView() {
+  const counter: CiteCounter = { n: 0 };
   return (
     <Stack gap="16px">
       {smartPrepInsights.map((insight) => (
-        <PrepInsightCard key={insight.number} insight={insight} />
+        <PrepInsightCard
+          key={insight.number}
+          insight={insight}
+          rationaleSpans={parseCiteText(insight.rationale, counter)}
+        />
       ))}
       <FooterDisclaimer />
     </Stack>
@@ -329,7 +337,16 @@ export const riskCategorySlug = (category: string) =>
   category.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 export const riskFindingId = (category: string) => `insight-risk-${riskCategorySlug(category)}`;
 
-function RiskFindingCard({ finding, index }: { finding: RiskFinding; index: number }) {
+function RiskFindingCard({
+  finding,
+  index,
+  excerptSpans,
+}: {
+  finding: RiskFinding;
+  index: number;
+  /** Precomputed citation spans per excerpt. */
+  excerptSpans: Span[][];
+}) {
   return (
     <Box id={riskFindingId(finding.category)} sx={{ scrollMarginTop: "32px" }}>
     <DetailCard>
@@ -340,10 +357,9 @@ function RiskFindingCard({ finding, index }: { finding: RiskFinding; index: numb
 
         <Stack gap="16px">
           <Typography
-            sx={({ tokens: { semantic: { color } } }) => ({
-              fontSize: "16px",
-              fontWeight: 600,
-              lineHeight: "24px",
+            variant="h4"
+            sx={({ tokens: { semantic: { color, fontWeight } } }) => ({
+              fontWeight: fontWeight.emphasis.value,
               color: color.type.default.value,
             })}
           >
@@ -358,8 +374,7 @@ function RiskFindingCard({ finding, index }: { finding: RiskFinding; index: numb
           <Stack gap="8px">
             <SubLabel>Relevant excerpt</SubLabel>
             <Stack gap="12px" sx={{ "& .AtlasAIChatMessage": { backgroundColor: "transparent" }, "& li": { fontSize: "14px" } }}>
-              {finding.excerpts.map((ex, i) => {
-                const text = `– Relevant Excerpt ${i + 1}: "${ex.text}" [${ex.citationIndex}]`;
+              {finding.excerpts.map((_ex, i) => {
                 return (
                   <Box
                     key={i}
@@ -370,7 +385,7 @@ function RiskFindingCard({ finding, index }: { finding: RiskFinding; index: numb
                     })}
                   >
                     <RichAIMessageContent
-                      blocks={[{ type: "p", spans: parseCiteText(text) }]}
+                      blocks={[{ type: "p", spans: excerptSpans[i] }]}
                       sources={smartRiskSources}
                       messageId={`risk-${finding.category}-${i}`}
                       previewContext="insight"
@@ -388,7 +403,7 @@ function RiskFindingCard({ finding, index }: { finding: RiskFinding; index: numb
 }
 
 function RiskEmptyCategoriesCard({ categories }: { categories: readonly string[] }) {
-  const { tokens: { semantic: { color } } } = useTheme();
+  const { tokens: { semantic: { color, fontWeight } } } = useTheme();
   return (
     <DetailCard>
       <Stack gap="20px">
@@ -397,12 +412,8 @@ function RiskEmptyCategoriesCard({ categories }: { categories: readonly string[]
             <InfoIcon size="md" />
           </Box>
           <Typography
-            sx={{
-              fontSize: "16px",
-              fontWeight: 600,
-              lineHeight: "24px",
-              color: color.type.default.value,
-            }}
+            variant="h4"
+            sx={{ fontWeight: fontWeight.emphasis.value, color: color.type.default.value }}
           >
             No relevant content to highlight in these categories
           </Typography>
@@ -427,11 +438,25 @@ function RiskEmptyCategoriesCard({ categories }: { categories: readonly string[]
 }
 
 export function InsightRiskView() {
+  const counter: CiteCounter = { n: 0 };
   return (
     <Stack gap="16px">
-      {smartRiskFindings.map((finding, i) => (
-        <RiskFindingCard key={finding.category} finding={finding} index={i + 1} />
-      ))}
+      {smartRiskFindings.map((finding, i) => {
+        const excerptSpans = finding.excerpts.map((ex, j) =>
+          parseCiteText(
+            `– Relevant Excerpt ${j + 1}: "${ex.text}" [${ex.citationIndex}]`,
+            counter,
+          ),
+        );
+        return (
+          <RiskFindingCard
+            key={finding.category}
+            finding={finding}
+            index={i + 1}
+            excerptSpans={excerptSpans}
+          />
+        );
+      })}
       {smartRiskEmptyCategories.length > 0 && (
         <RiskEmptyCategoriesCard categories={smartRiskEmptyCategories} />
       )}

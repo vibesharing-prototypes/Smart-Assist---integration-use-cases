@@ -107,6 +107,25 @@ export const suggestionCards: SuggestionCard[] = [
   },
 ];
 
+export const directorSuggestionCards: SuggestionCard[] = [
+  {
+    category: "Prepare for my meeting",
+    prompt: '"What should I review before [committee] based on last meeting\'s follow-ups?"',
+  },
+  {
+    category: "Monitor trends",
+    prompt: '"How has [risk / metric / topic] changed across the last [X] board cycles?"',
+  },
+  {
+    category: "Find a past decision",
+    prompt: '"When did the board approve [policy], and what was resolved?"',
+  },
+  {
+    category: "Summarize decisions",
+    prompt: '"Summarize key board decisions and highlights from the past year."',
+  },
+];
+
 // ─── Mock chat conversation ───────────────────────────────────────────────────
 // Variant 0 of the hybrid-search conversation chain (admin side).
 // Full variant set lives in hybrid-search.constants.ts.
@@ -173,45 +192,22 @@ const SUMMARY_SECTIONS = [
   "Outlook and five-year forecast",
 ] as const;
 
-/** Sources cited by Smart Summary's Detailed Summary paragraphs. Every
- *  citation gets its own unique index — sources may repeat the same underlying
- *  document at different pages/sections. */
+/** Sources cited by Smart Summary's Detailed Summary paragraphs. One entry per
+ *  unique (document, page) — citations that resolved to the same page have been
+ *  collapsed so a given page is never cited twice. */
 export const smartSummarySources: Source[] = [
-  { index: 1, title: "Q2 2026 Consolidated Financial Statements", page: "2" },
-  { index: 2, title: "CFO Commentary — Q2 2026", page: "3" },
-  { index: 3, title: "Segment Reporting Appendix — Q2 2026", page: "11" },
-  { index: 4, title: "Q2 2026 Consolidated Financial Statements", page: "4" },
-  { index: 5, title: "Q2 2026 Consolidated Financial Statements", page: "6" },
-  { index: 6, title: "CFO Commentary — Q2 2026", page: "4" },
-  { index: 7, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "5" },
-  { index: 8, title: "Segment Reporting Appendix — Q2 2026", page: "12" },
-  { index: 9, title: "Segment Reporting Appendix — Q2 2026", page: "13" },
-  { index: 10, title: "Capital Plan and Buyback Proposal — Q3 2026", page: "1" },
-  { index: 11, title: "CFO Commentary — Q2 2026", page: "5" },
-  { index: 12, title: "Capital Plan and Buyback Proposal — Q3 2026", page: "3" },
-  { index: 13, title: "Singapore JV — Term Sheet Memo", page: "6" },
-  { index: 14, title: "Singapore JV — Term Sheet Memo", page: "8" },
-  { index: 15, title: "Singapore JV — Term Sheet Memo", page: "12" },
-  { index: 16, title: "Core Banking Migration — Steering Committee Update", page: "4" },
-  { index: 17, title: "Core Banking Migration — Steering Committee Update", page: "6" },
-  { index: 18, title: "Audit Committee Report — June 2026", page: "9" },
-  { index: 19, title: "ClearPath Integration — Day-100 Review", page: "2" },
-  { index: 20, title: "ClearPath Integration — Day-100 Review", page: "4" },
-  { index: 21, title: "ClearPath Integration — Day-100 Review", page: "6" },
-  { index: 22, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2" },
-  { index: 23, title: "Cybersecurity Quarterly Update — Q2 2026", page: "5" },
-  { index: 24, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "7" },
-  { index: 25, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "9" },
-  { index: 26, title: "Segment Reporting Appendix — Q2 2026", page: "16" },
-  { index: 27, title: "Audit Committee Report — June 2026", page: "12" },
-  { index: 28, title: "Audit Committee Report — June 2026", page: "14" },
-  { index: 29, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "11" },
-  { index: 30, title: "CFO Commentary — Q2 2026", page: "8" },
-  { index: 31, title: "CFO Commentary — Q2 2026", page: "9" },
-  { index: 32, title: "Five-Year Plan Refresh — June 2026", page: "8" },
-  { index: 33, title: "Five-Year Plan Refresh — June 2026", page: "12" },
-  { index: 34, title: "CFO Commentary — Q2 2026", page: "10" },
-  { index: 35, title: "Five-Year Plan Refresh — June 2026", page: "15" },
+  { index: 1,  title: "Q2 2026 Consolidated Financial Statements", page: "2",        documentId: "fin-statements-q2-2026", targetPage: 2 },
+  { index: 2,  title: "CFO Commentary — Q2 2026", page: "2",                         documentId: "cfo-commentary-q2-2026", targetPage: 2 },
+  { index: 3,  title: "Segment Reporting Appendix — Q2 2026", page: "2",             documentId: "segment-report-q2-2026", targetPage: 2 },
+  { index: 4,  title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "2",    documentId: "risk-compliance-q2-2026", targetPage: 2 },
+  { index: 5,  title: "Capital Plan and Buyback Proposal — Q3 2026", page: "1",      documentId: "capital-plan-q3-2026", targetPage: 1 },
+  { index: 6,  title: "Capital Plan and Buyback Proposal — Q3 2026", page: "2",      documentId: "capital-plan-q3-2026", targetPage: 2 },
+  { index: 7,  title: "Singapore JV — Term Sheet Memo", page: "2",                   documentId: "singapore-jv-memo", targetPage: 2 },
+  { index: 8,  title: "Core Banking Migration — Steering Committee Update", page: "2", documentId: "core-banking-migration", targetPage: 2 },
+  { index: 9,  title: "Audit Committee Report — June 2026", page: "2",               documentId: "audit-committee-jun-2026", targetPage: 2 },
+  { index: 10, title: "ClearPath Integration — Day-100 Review", page: "2",           documentId: "clearpath-day-100", targetPage: 2 },
+  { index: 11, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2",         documentId: "cyber-quarterly-q2-2026", targetPage: 2 },
+  { index: 12, title: "Five-Year Plan Refresh — June 2026", page: "2",               documentId: "five-year-plan-jun-2026", targetPage: 2 },
 ];
 
 export const smartSummarySections: SummarySection[] = [
@@ -250,19 +246,19 @@ export const smartSummarySections: SummarySection[] = [
         paragraphs: [
           {
             label: "Revenue and earnings",
-            text: "Group revenue of $1.24B (+8.3% YoY) outpaced guidance of $1.18–$1.22B. [1] Net interest income rose 4.1% on higher average earning assets, partially offset by a 6-bp compression in net interest margin to 2.74%. [2] Non-interest income grew 12.6%, driven by 18.4% growth in Asset Management fees and 9.2% in Advisory. [3] Adjusted EPS of $1.84 beat consensus of $1.71. [4]",
+            text: "Group revenue of $1.24B (+8.3% YoY) outpaced guidance of $1.18–$1.22B. [1] Net interest income rose 4.1% on higher average earning assets, partially offset by a 6-bp compression in net interest margin to 2.74%. [2] Non-interest income grew 12.6%, driven by 18.4% growth in Asset Management fees and 9.2% in Advisory. [3] Adjusted EPS of $1.84 beat consensus of $1.71.",
           },
           {
             label: "Expense and credit",
-            text: "Operating expenses increased 3.2% YoY to $766M, well below revenue growth. [5] The efficiency ratio improved to 61.6% from 64.6%. [6] The provision for credit losses was $54M, up modestly from $48M in Q1 reflecting a small build in CRE reserves; net charge-offs remained benign at 18 bps annualized. [7]",
+            text: "Operating expenses increased 3.2% YoY to $766M, well below revenue growth. [1] The efficiency ratio improved to 61.6% from 64.6%. [2] The provision for credit losses was $54M, up modestly from $48M in Q1 reflecting a small build in CRE reserves; net charge-offs remained benign at 18 bps annualized. [4]",
           },
           {
             label: "Segment view",
-            text: "Asset Management revenue of $342M (+11.8%) on $42B in net new assets. [8] Advisory revenue of $198M (+14.2%) led by record M&A advisory fees in EMEA. Markets revenue of $264M (–4.1%) on softer FX and rates volumes, while Wealth Management revenue of $268M (+9.7%) reflected continued client inflows. [9]",
+            text: "Asset Management revenue of $342M (+11.8%) on $42B in net new assets. [3] Advisory revenue of $198M (+14.2%) led by record M&A advisory fees in EMEA. Markets revenue of $264M (–4.1%) on softer FX and rates volumes, while Wealth Management revenue of $268M (+9.7%) reflected continued client inflows.",
           },
           {
             label: "Capital and liquidity",
-            text: "CET1 ratio held steady at 13.2%, well above the 11.0% regulatory floor. [10] Liquidity coverage ratio improved to 142% on the back of $1.8B in new term deposits from the wealth segment. [11] The Board is asked to approve the Q3 share repurchase tranche of up to $200M. [12]",
+            text: "CET1 ratio held steady at 13.2%, well above the 11.0% regulatory floor. [5] Liquidity coverage ratio improved to 142% on the back of $1.8B in new term deposits from the wealth segment. [2] The Board is asked to approve the Q3 share repurchase tranche of up to $200M. [6]",
           },
         ],
       },
@@ -271,15 +267,15 @@ export const smartSummarySections: SummarySection[] = [
         paragraphs: [
           {
             label: "Singapore JV with Orion Partners",
-            text: "Definitive agreements are tracking for signing in early August. [13] Initial committed capital is $180M (60/40 Meridian/Orion), and the operating model leverages Orion's MAS licence on day one while consolidating into Meridian's reporting stack. [14] First client mandates are projected to close in Q1 2027 with a target run-rate AUM of $4B by year-end 2027. [15]",
+            text: "Definitive agreements are tracking for signing in early August. [7] Initial committed capital is $180M (60/40 Meridian/Orion), and the operating model leverages Orion's MAS licence on day one while consolidating into Meridian's reporting stack. First client mandates are projected to close in Q1 2027 with a target run-rate AUM of $4B by year-end 2027.",
           },
           {
             label: "Core banking migration",
-            text: "Migration is 67% complete and on plan to finish by Q4 2026. [16] Cut-over for retail deposits is scheduled for the weekend of October 17, with contingency budget held at $4.8M and no material reforecast expected. [17] Independent assurance for the cut-over has been engaged for a pre-event readiness review in late August. [18]",
+            text: "Migration is 67% complete and on plan to finish by Q4 2026. [8] Cut-over for retail deposits is scheduled for the weekend of October 17, with contingency budget held at $4.8M and no material reforecast expected. Independent assurance for the cut-over has been engaged for a pre-event readiness review in late August. [9]",
           },
           {
             label: "ClearPath integration",
-            text: "Day-100 milestones were met and cost synergies of $6M are tracking ahead of plan. [19] Cross-sell into existing institutional accounts has produced 14 signed mandates representing $310M in expected new AUM. [20] Talent retention through Q2 stands at 94%, above the 90% deal-model assumption. [21]",
+            text: "Day-100 milestones were met and cost synergies of $6M are tracking ahead of plan. [10] Cross-sell into existing institutional accounts has produced 14 signed mandates representing $310M in expected new AUM. Talent retention through Q2 stands at 94%, above the 90% deal-model assumption.",
           },
         ],
       },
@@ -288,15 +284,15 @@ export const smartSummarySections: SummarySection[] = [
         paragraphs: [
           {
             label: "Cyber and operational risk",
-            text: "Following the sector-wide FS-ISAC advisory in May, the Risk Committee endorsed an incremental $3.2M investment in endpoint detection and identity controls. [22] Phishing simulation click-through dropped to 4.1% from 6.8% the prior quarter, and no material operational losses were reported in the quarter. [23]",
+            text: "Following the sector-wide FS-ISAC advisory in May, the Risk Committee endorsed an incremental $3.2M investment in endpoint detection and identity controls. [11] Phishing simulation click-through dropped to 4.1% from 6.8% the prior quarter, and no material operational losses were reported in the quarter.",
           },
           {
             label: "Credit portfolio",
-            text: "The CRE office portfolio (3.4% of total loans) is being actively re-underwritten; weighted-average LTV stands at 58% with an interest coverage ratio of 1.84x. [24] Two single-name relationships moved to watchlist this quarter, with specific reserves of $11M established. [25] Run-off of $260M YoY was achieved primarily through scheduled maturities and selected secondary sales. [26]",
+            text: "The CRE office portfolio (3.4% of total loans) is being actively re-underwritten; weighted-average LTV stands at 58% with an interest coverage ratio of 1.84x. [4] Two single-name relationships moved to watchlist this quarter, with specific reserves of $11M established. Run-off of $260M YoY was achieved primarily through scheduled maturities and selected secondary sales. [3]",
           },
           {
             label: "Regulatory engagement",
-            text: "The OCC horizontal review on third-party risk management closed with two matters requiring attention, both with remediation plans accepted by the regulator. [27] Independent validation by Internal Audit is scheduled for Q3 2026, with a follow-up walkthrough with the OCC team in Q4. [28] No new enforcement actions were recorded in the quarter. [29]",
+            text: "The OCC horizontal review on third-party risk management closed with two matters requiring attention, both with remediation plans accepted by the regulator. [9] Independent validation by Internal Audit is scheduled for Q3 2026, with a follow-up walkthrough with the OCC team in Q4. No new enforcement actions were recorded in the quarter. [4]",
           },
         ],
       },
@@ -305,15 +301,15 @@ export const smartSummarySections: SummarySection[] = [
         paragraphs: [
           {
             label: "FY26 reforecast",
-            text: "Management is raising full-year revenue guidance to $4.85–$4.95B (from $4.75–$4.85B) and adjusted EPS to $7.20–$7.35 (from $6.95–$7.10). [30] Expense growth guidance is held at 3.0–4.0%, preserving incremental investment capacity in technology and Asia. [31]",
+            text: "Management is raising full-year revenue guidance to $4.85–$4.95B (from $4.75–$4.85B) and adjusted EPS to $7.20–$7.35 (from $6.95–$7.10). [2] Expense growth guidance is held at 3.0–4.0%, preserving incremental investment capacity in technology and Asia.",
           },
           {
             label: "Five-year plan",
-            text: "Management's updated five-year plan targets a revenue CAGR of 7.5–8.5%, adjusted ROTE of 15–17%, and a CET1 ratio sustained in the 12.5–13.5% range. [32] Total capital returned to shareholders over the period is modeled at $4.2B through a combination of dividends and buybacks, subject to stress-test results. [33]",
+            text: "Management's updated five-year plan targets a revenue CAGR of 7.5–8.5%, adjusted ROTE of 15–17%, and a CET1 ratio sustained in the 12.5–13.5% range. [12] Total capital returned to shareholders over the period is modeled at $4.2B through a combination of dividends and buybacks, subject to stress-test results.",
           },
           {
             label: "Sensitivities",
-            text: "Each 25 bps parallel decline in rates is estimated to reduce NII by approximately $38M annualized. [34] A 100-bp widening in IG credit spreads reduces non-interest income by an estimated $14M, and the plan assumes US real GDP growth of 1.5–2.0% across the planning horizon. [35]",
+            text: "Each 25 bps parallel decline in rates is estimated to reduce NII by approximately $38M annualized. [2] A 100-bp widening in IG credit spreads reduces non-interest income by an estimated $14M, and the plan assumes US real GDP growth of 1.5–2.0% across the planning horizon. [12]",
           },
         ],
       },
@@ -335,12 +331,12 @@ export interface PrepInsight {
 
 /** Sources cited by Smart Prep rationale paragraphs. */
 export const smartPrepSources: Source[] = [
-  { index: 1, title: "CFO Commentary — Q2 2026", page: "3" },
-  { index: 2, title: "Q2 2026 Board Pack — Strategic Plan Refresh", page: "12" },
-  { index: 3, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "4" },
-  { index: 4, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2" },
-  { index: 5, title: "Singapore JV — Term Sheet Memo", page: "6" },
-  { index: 6, title: "Capital Plan and Buyback Proposal — Q3 2026", page: "1" },
+  { index: 1, title: "CFO Commentary — Q2 2026", page: "2",                       documentId: "cfo-commentary-q2-2026", targetPage: 2 },
+  { index: 2, title: "Q2 2026 Board Pack — Strategic Plan Refresh", page: "2",     documentId: "strategic-plan-refresh", targetPage: 2 },
+  { index: 3, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "2",   documentId: "risk-compliance-q2-2026", targetPage: 2 },
+  { index: 4, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2",        documentId: "cyber-quarterly-q2-2026", targetPage: 2 },
+  { index: 5, title: "Singapore JV — Term Sheet Memo", page: "2",                  documentId: "singapore-jv-memo", targetPage: 2 },
+  { index: 6, title: "Capital Plan and Buyback Proposal — Q3 2026", page: "1",     documentId: "capital-plan-q3-2026", targetPage: 1 },
 ];
 
 export const smartPrepInsights: PrepInsight[] = [
@@ -483,14 +479,14 @@ export interface RiskFinding {
 
 /** Sources cited by the Smart Risk Scanner excerpts. */
 export const smartRiskSources: Source[] = [
-  { index: 1, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "4" },
-  { index: 2, title: "Q2 2026 Board Pack — Strategic Plan Refresh", page: "12" },
-  { index: 3, title: "Audit Committee Report — June 2026", page: "7" },
-  { index: 4, title: "CFO Commentary — Q2 2026", page: "3" },
-  { index: 5, title: "ESG and Sustainability Disclosure — H1 2026", page: "9" },
-  { index: 6, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2" },
-  { index: 7, title: "Internal Audit Findings Log — Q2 2026", page: "5" },
-  { index: 8, title: "Singapore JV — Term Sheet Memo", page: "6" },
+  { index: 1, title: "Q2 2026 Board Pack — Risk & Compliance Update", page: "2",   documentId: "risk-compliance-q2-2026", targetPage: 2 },
+  { index: 2, title: "Q2 2026 Board Pack — Strategic Plan Refresh", page: "2",     documentId: "strategic-plan-refresh", targetPage: 2 },
+  { index: 3, title: "Audit Committee Report — June 2026", page: "2",             documentId: "audit-committee-jun-2026", targetPage: 2 },
+  { index: 4, title: "CFO Commentary — Q2 2026", page: "2",                       documentId: "cfo-commentary-q2-2026", targetPage: 2 },
+  { index: 5, title: "ESG and Sustainability Disclosure — H1 2026", page: "2",    documentId: "esg-disclosure-h1-2026", targetPage: 2 },
+  { index: 6, title: "Cybersecurity Quarterly Update — Q2 2026", page: "2",        documentId: "cyber-quarterly-q2-2026", targetPage: 2 },
+  { index: 7, title: "Internal Audit Findings Log — Q2 2026", page: "2",           documentId: "internal-audit-log-q2-2026", targetPage: 2 },
+  { index: 8, title: "Singapore JV — Term Sheet Memo", page: "2",                  documentId: "singapore-jv-memo", targetPage: 2 },
 ];
 
 export const smartRiskFindings: RiskFinding[] = [
@@ -688,6 +684,11 @@ export interface AdminBook {
   documentStatus: "Draft" | "Published";
   status: AdminBookStatus;
   lastUpdated: string;
+  /**
+   * Pending approvals for this book. Director-only concept — the admin book
+   * list doesn't surface it, but the director Home/Books rows show a badge.
+   */
+  approvals?: number;
 }
 
 export const adminBooks: AdminBook[] = [
@@ -705,6 +706,7 @@ export const adminBooks: AdminBook[] = [
     documentStatus: "Draft",
     status: "Published",
     lastUpdated: "06/10/2026",
+    approvals: 3,
   },
   {
     id: "2",
@@ -750,6 +752,7 @@ export const adminBooks: AdminBook[] = [
     documentStatus: "Draft",
     status: "Published",
     lastUpdated: "07/01/2026",
+    approvals: 2,
   },
   {
     id: "5",
@@ -811,7 +814,37 @@ export const adminBooks: AdminBook[] = [
     status: "Archived",
     lastUpdated: "09/20/2024",
   },
+  {
+    id: "bb-q1-2026",
+    title: "Board Book Q1 2026",
+    dateRange: "Mar 18–19, 2026",
+    meetingDate: "03/18/2026",
+    labels: ["Quarterly", "Audit committee"],
+    committees: ["Audit committee", "Main committee"],
+    extraCommittees: 0,
+    isLocked: false,
+    hasCustomAccess: false,
+    documentName: "Board_Book_Q1_2026",
+    documentStatus: "Published",
+    status: "Published",
+    lastUpdated: "03/16/2026",
+  },
 ];
+
+// ─── Director-facing book views ───────────────────────────────────────────────
+// Directors and admins share the same book list, but directors never see
+// unpublished books. The Books page shows everything else (published +
+// archived); the Home page shows published books only.
+
+/** Books visible to directors on the Books page — published + archived. */
+export const directorBooks: AdminBook[] = adminBooks.filter(
+  (b) => b.status !== "Unpublished",
+);
+
+/** Books visible to directors on the Home page — published only. */
+export const directorHomeBooks: AdminBook[] = adminBooks.filter(
+  (b) => b.status === "Published",
+);
 
 // ─── Review book navigation structure ────────────────────────────────────────
 

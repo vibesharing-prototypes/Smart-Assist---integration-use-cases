@@ -1,16 +1,21 @@
 import { AppLayout } from "@diligentcorp/atlas-react-bundle";
-import { Navigate, Outlet, Route, Routes } from "react-router";
-import { useEffect } from "react";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+import { useEffect, useRef } from "react";
 import "./styles.css";
 
 import Navigation from "./Navigation.js";
+import ViewSwitcherButton from "./components/ViewSwitcherButton.js";
 import SettingsPage from "./pages/SettingsPage.js";
 import SimplePage from "./pages/SimplePage.js";
 import AIAssistantPage from "./pages/AIAssistantPage.js";
 import AdminBooksPage from "./pages/AdminBooksPage.js";
 import BookEditorPage from "./pages/BookEditorPage.js";
+import DirectorHomePage from "./pages/DirectorHomePage.js";
+import DirectorBooksPage from "./pages/DirectorBooksPage.js";
+import DirectorBookReaderPage from "./pages/DirectorBookReaderPage.js";
+import DirectorResourceCenterPage from "./pages/DirectorResourceCenterPage.js";
 import ResourceCenterPage from "./pages/ResourceCenterPage.js";
-import { SmartAssistProvider } from "./context/SmartAssistContext.js";
+import { SmartAssistProvider, useSmartAssist } from "./context/SmartAssistContext.js";
 import { CitationPreviewProvider } from "./context/CitationPreviewContext.js";
 
 // ─── Force sidebar into persistent panel mode ─────────────────────────────────
@@ -251,6 +256,47 @@ function useDisableHeaderMenuClicks() {
   }, []);
 }
 
+// ─── Override org-switcher name + logo ────────────────────────────────────────
+// AppLayout's `orgName` prop is clobbered by mock-hb-global-navigator's
+// connectedCallback (it reads getAttribute("orgName"), which is null because
+// React 19 sets it as a JS property, then falls back to the "Test company"
+// default). We override the org-switcher's `organizations` reactive property
+// directly so Lit re-renders the button with the correct name.
+
+function useOverrideOrgSwitcher(orgName: string) {
+  useEffect(() => {
+    const trySet = () => {
+      const mockNav = document.querySelector("mock-hb-global-navigator");
+      const root = (mockNav as Element & { shadowRoot: ShadowRoot | null })?.shadowRoot;
+      const orgSwitcher = root?.querySelector("atlas-gn-org-switcher") as
+        | (HTMLElement & {
+            organizations?: Array<Record<string, unknown>>;
+          })
+        | null;
+      if (!orgSwitcher) return false;
+      const existing = orgSwitcher.organizations?.[0];
+      orgSwitcher.organizations = [
+        {
+          id: 0,
+          logo: (existing?.logo as string) ?? "",
+          customerName: orgName,
+          name: orgName,
+          launchpad: "#",
+          subdomain: "",
+          regionCode: "en",
+          subscriptionStatusMessage: "",
+        },
+      ];
+      return true;
+    };
+    if (trySet()) return;
+    const id = setInterval(() => {
+      if (trySet()) clearInterval(id);
+    }, 100);
+    return () => clearInterval(id);
+  }, [orgName]);
+}
+
 // ─── Hide app switcher from the global nav header ─────────────────────────────
 
 function useHideAppSwitcher() {
@@ -275,6 +321,161 @@ function useHideAppSwitcher() {
 
 // ─── App ──────────────────────────────────────────────────────────────────────
 
+// ─── Force Inter font-family inside the nav shadow root ──────────────────────
+// The Atlas MUI theme bakes the literal string "Plus Jakarta Sans Variable" into
+// typography.fontFamily (Atlas Light's latest tokens use Inter, but the locally
+// installed bundle is older). MUI/Lit components rendered inside
+// mock-hb-global-navigator's shadow root therefore receive the baked-in family
+// and ignore our --lens-semantic-font-family-body override. Injecting a <style>
+// inside that shadow root forces Inter on everything in the nav.
+
+function useNavFontFamilyInter() {
+  useEffect(() => {
+    const FONT_STACK = '"Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    const STYLE_ID = "prototype-nav-inter-font";
+    const tryInject = () => {
+      const mockNav = document.querySelector("mock-hb-global-navigator");
+      const root = (mockNav as Element & { shadowRoot: ShadowRoot | null })?.shadowRoot;
+      if (!root) return false;
+      if (root.getElementById(STYLE_ID)) return true;
+      const style = document.createElement("style");
+      style.id = STYLE_ID;
+      style.textContent = `
+        :host, * { font-family: ${FONT_STACK} !important; }
+      `;
+      root.appendChild(style);
+      return true;
+    };
+    if (tryInject()) return;
+    const id = setInterval(() => {
+      if (tryInject()) clearInterval(id);
+    }, 100);
+    return () => clearInterval(id);
+  }, []);
+}
+
+// ─── Top-bar trailing slot customization (persona-agnostic) ───────────────────
+// - Hide the gear (org-settings) menu
+// - Remove the gray vertical divider rendered as atlas-gn-user-menu::before
+// - Inject a keyboard icon button before atlas-gn-help-menu
+//   Final order: [view-switcher][keyboard][help][avatar]
+
+function useTopBarTrailingCustomization() {
+  useEffect(() => {
+    const STYLE_ID = "topbar-trailing-style";
+    const KEYBOARD_HOST_ID = "topbar-keyboard-host";
+    const KEYBOARD_SVG = `
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path d="M2.5 18.5V5.5H21.5V18.5H2.5ZM3.99998 17H20V6.99998H3.99998V17ZM8.11538 15.8846H15.8846V14.1154H8.11538V15.8846ZM5.11538 12.8846H6.88458V11.1154H5.11538V12.8846ZM8.11538 12.8846H9.88457V11.1154H8.11538V12.8846ZM11.1154 12.8846H12.8846V11.1154H11.1154V12.8846ZM14.1154 12.8846H15.8846V11.1154H14.1154V12.8846ZM17.1154 12.8846H18.8846V11.1154H17.1154V12.8846ZM5.11538 9.88458H6.88458V8.11538H5.11538V9.88458ZM8.11538 9.88458H9.88457V8.11538H8.11538V9.88458ZM11.1154 9.88458H12.8846V8.11538H11.1154V9.88458ZM14.1154 9.88458H15.8846V8.11538H14.1154V9.88458ZM17.1154 9.88458H18.8846V8.11538H17.1154V9.88458Z" fill="currentColor"/>
+</svg>`;
+
+    let host: HTMLButtonElement | null = null;
+
+    const tryInject = () => {
+      const mockNav = document.querySelector("mock-hb-global-navigator");
+      const mockRoot = (mockNav as Element & { shadowRoot: ShadowRoot | null })?.shadowRoot;
+      if (!mockRoot) return false;
+      const helpMenu = mockRoot.querySelector("atlas-gn-help-menu") as HTMLElement | null;
+      if (!helpMenu?.parentNode) return false;
+
+      // Inject persistent style
+      if (!mockRoot.querySelector(`#${STYLE_ID}`)) {
+        const style = document.createElement("style");
+        style.id = STYLE_ID;
+        style.textContent = `
+          atlas-gn-org-settings-menu { display: none !important; }
+          atlas-gn-user-menu::before { display: none !important; }
+          atlas-gn-user-menu { padding-inline-start: 0 !important; }
+          #${KEYBOARD_HOST_ID} {
+            all: unset;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            color: var(--lens-semantic-color-action-secondary-on-secondary);
+            background: transparent;
+            cursor: pointer;
+          }
+          #${KEYBOARD_HOST_ID}:hover { background: var(--lens-semantic-color-action-secondary-hover-fill); }
+          #${KEYBOARD_HOST_ID}:active { background: var(--lens-semantic-color-action-secondary-active-fill); }
+        `;
+        mockRoot.appendChild(style);
+      }
+
+      // Create / reuse keyboard host
+      host = mockRoot.querySelector(`#${KEYBOARD_HOST_ID}`) as HTMLButtonElement | null;
+      if (!host) {
+        host = document.createElement("button");
+        host.id = KEYBOARD_HOST_ID;
+        host.type = "button";
+        host.setAttribute("slot", "trailing");
+        host.setAttribute("aria-label", "Keyboard shortcuts");
+        host.title = "Keyboard shortcuts";
+        host.innerHTML = KEYBOARD_SVG;
+        helpMenu.parentNode.insertBefore(host, helpMenu);
+      }
+      return true;
+    };
+
+    if (tryInject()) {
+      return () => {
+        host?.remove();
+      };
+    }
+    const id = setInterval(() => {
+      if (tryInject()) clearInterval(id);
+    }, 100);
+    return () => {
+      clearInterval(id);
+      host?.remove();
+    };
+  }, []);
+}
+
+function ViewSwitcherForRoute() {
+  const { pathname } = useLocation();
+
+  // Director book reader hides the global nav entirely — no host for the button.
+  // The admin book reader keeps the nav, so the button stays.
+  const isDirectorBookReader = /^\/director\/books\/[^/]+/.test(pathname);
+  if (isDirectorBookReader) return null;
+
+  if (pathname === "/books" || pathname.startsWith("/admin")) {
+    return <ViewSwitcherButton label="Open director view" href="/director" />;
+  }
+  if (pathname.startsWith("/director")) {
+    return <ViewSwitcherButton label="Open administrator view" href="/admin/books" />;
+  }
+  return null;
+}
+
+// Smart Assist Insights are book-scoped: the docked panel / overlay only makes
+// sense inside a book reader. When the user navigates out of a book reader to
+// any other page, close the panel and overlay so they don't linger with stale
+// book content. Navigating between two book readers keeps it open.
+const isBookReaderRoute = (path: string) =>
+  /^\/(?:director\/|admin\/)?books\/[^/]+/.test(path);
+
+function SmartAssistRouteSync() {
+  const { pathname } = useLocation();
+  const { closePanel, closeOverlay } = useSmartAssist();
+  const prevPathRef = useRef(pathname);
+
+  useEffect(() => {
+    const left = isBookReaderRoute(prevPathRef.current) && !isBookReaderRoute(pathname);
+    prevPathRef.current = pathname;
+    if (left) {
+      closePanel();
+      closeOverlay();
+    }
+  }, [pathname, closePanel, closeOverlay]);
+
+  return null;
+}
+
 function AppShell() {
   usePanelMode();
   useNavContainerFullHeight();
@@ -284,10 +485,15 @@ function AppShell() {
   useHideSideNavFooter();
   useHidePlatformNavItems();
   useCollapsedNavStyle();
+  useNavFontFamilyInter();
+  useOverrideOrgSwitcher("ACME Ltd.");
+  useTopBarTrailingCustomization();
   return (
-    <AppLayout navigation={<Navigation />} orgName="Test company">
+    <AppLayout navigation={<Navigation />} orgName="ACME Ltd.">
       <CitationPreviewProvider>
         <SmartAssistProvider>
+          <SmartAssistRouteSync />
+          <ViewSwitcherForRoute />
           <Outlet />
         </SmartAssistProvider>
       </CitationPreviewProvider>
@@ -299,11 +505,16 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppShell />}>
-        <Route index element={<Navigate to="/books" replace />} />
+        <Route index element={<Navigate to="/director" replace />} />
+        <Route path="director" element={<DirectorHomePage />} />
+        <Route path="director/books" element={<DirectorBooksPage />} />
+        <Route path="director/books/:id" element={<DirectorBookReaderPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="simple" element={<SimplePage />} />
         <Route path="ai-assistant" element={<AIAssistantPage />} />
         <Route path="resource-center" element={<ResourceCenterPage />} />
+        <Route path="admin/resource-center" element={<ResourceCenterPage />} />
+        <Route path="director/resource-center" element={<DirectorResourceCenterPage />} />
         <Route path="books" element={<AdminBooksPage />} />
         <Route path="books/:id" element={<BookEditorPage />} />
         <Route path="admin/books" element={<AdminBooksPage />} />
