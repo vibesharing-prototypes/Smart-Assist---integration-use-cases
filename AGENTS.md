@@ -25,9 +25,18 @@ Please prompt the user to get a new key from the Atlas documentation on Confluen
 
 ## Atlas React Bundle dependency
 
-We're using an https dependency in the package.json file to install the `@diligentcorp/atlas-react-bundle` package.
+`@diligentcorp/atlas-react-bundle` is **vendored** — the tarball is committed at
+`vendor/atlas-react-bundle.tgz` and `package.json` points at it with a `file:`
+dependency. This pins the design system to one exact version so local and deployed
+builds can never drift apart.
 
-The contents of the bundle might change over time, so the integrity information in the package lock file might become outdated. You can always use forced methods to update the dependency or packages. Package lock files are intentionally ignored in the .gitignore file.
+Previously this was an `https://atlas.diligent.com/react-bundle.tgz` URL dependency
+with no version, which meant every fresh `npm install` (including deploys) could pull
+a different bundle and silently change theme tokens, fonts, and table styles.
+
+To update Atlas: re-pack the new bundle into `vendor/atlas-react-bundle.tgz`
+(`npm pack` the installed package), then `npm install`. Package lock files remain
+gitignored — the `file:` dependency is deterministic on its own.
 
 ## Styling
 

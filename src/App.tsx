@@ -505,7 +505,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<AppShell />}>
-        <Route index element={<Navigate to="/director" replace />} />
+        <Route index element={<Navigate to="/admin/books" replace />} />
         <Route path="director" element={<DirectorHomePage />} />
         <Route path="director/books" element={<DirectorBooksPage />} />
         <Route path="director/books/:id" element={<DirectorBookReaderPage />} />

@@ -13,7 +13,7 @@
     "atlas-inventory": "node scripts/generate-atlas-inventory.mjs"
   },
   "dependencies": {
-    "@diligentcorp/atlas-react-bundle": "https://atlas.diligent.com/react-bundle.tgz",
+    "@diligentcorp/atlas-react-bundle": "file:vendor/atlas-react-bundle.tgz",
     "@emotion/cache": "^11",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
