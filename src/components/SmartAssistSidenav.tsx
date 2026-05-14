@@ -181,6 +181,13 @@ export default function SmartAssistSidenav({
 
   const chatStarted = messages.length > 0;
 
+  // The Insights tab only exists in the GovernAI (book) context. `activeTab`
+  // lives in shared context and persists across navigation, so opening Insights
+  // inside a book and then opening Smart Assist outside one would otherwise
+  // render the Insights view in the chat area. Force the chat tab whenever
+  // insights aren't available here.
+  const effectiveTab = showInsights ? activeTab : 0;
+
   const handleTabChange = (idx: number) => {
     setActiveTab(idx);
     if (idx === 0) setSmartAssistView("new-chat");
@@ -198,8 +205,8 @@ export default function SmartAssistSidenav({
   };
 
   const showSubheader =
-    (activeTab === 0 && smartAssistView === "new-chat") ||
-    (activeTab === 1 && selectedInsight !== null);
+    (effectiveTab === 0 && smartAssistView === "new-chat") ||
+    (effectiveTab === 1 && selectedInsight !== null);
   const insightLabel = selectedInsight === "summary"
     ? "Smart Summary"
     : selectedInsight === "prep"
@@ -208,18 +215,18 @@ export default function SmartAssistSidenav({
         ? "Smart Risk Scanner"
         : null;
   const subheaderLabel =
-    activeTab === 0
+    effectiveTab === 0
       ? currentThreadId !== null
         ? threads.find((t) => t.id === currentThreadId)?.title ?? "New chat"
         : "New chat"
       : insightLabel;
   const handleSubheaderBack = () => {
-    if (activeTab === 0) setSmartAssistView("thread-list");
+    if (effectiveTab === 0) setSmartAssistView("thread-list");
     else setSelectedInsight(null);
   };
 
-  const showInput = activeTab === 0 && smartAssistView === "new-chat";
-  const showThreadListFooter = activeTab === 0 && smartAssistView === "thread-list";
+  const showInput = effectiveTab === 0 && smartAssistView === "new-chat";
+  const showThreadListFooter = effectiveTab === 0 && smartAssistView === "thread-list";
 
   // Scroll the chat's own container to the bottom without disturbing
   // ancestor scrollers (using scrollIntoView on a sentinel can scroll the
@@ -409,7 +416,7 @@ export default function SmartAssistSidenav({
       <Box sx={{ height: "1px", flexShrink: 0, background: AI_GRADIENT }} />
 
       {/* ── Smart Assist tab — new chat ── */}
-      {activeTab === 0 && smartAssistView === "new-chat" && (
+      {effectiveTab === 0 && smartAssistView === "new-chat" && (
         <Box
           sx={{
             flex: 1,
@@ -560,7 +567,7 @@ export default function SmartAssistSidenav({
       )}
 
       {/* ── Smart Assist tab — thread list ── */}
-      {activeTab === 0 && smartAssistView === "thread-list" && (
+      {effectiveTab === 0 && smartAssistView === "thread-list" && (
         <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", background: THREAD_BG, pt: "24px", px: "16px", pb: "16px" }}>
           <Button
             variant="text"
@@ -602,7 +609,7 @@ export default function SmartAssistSidenav({
       )}
 
       {/* ── Insights tab — feature list ── */}
-      {activeTab === 1 && selectedInsight === null && (
+      {effectiveTab === 1 && selectedInsight === null && (
         <Box
           sx={{
             flex: 1,
@@ -678,7 +685,7 @@ export default function SmartAssistSidenav({
       )}
 
       {/* ── Insights tab — feature view ── */}
-      {activeTab === 1 && selectedInsight !== null && (
+      {effectiveTab === 1 && selectedInsight !== null && (
         <Box
           sx={{
             flex: 1,
@@ -704,7 +711,7 @@ export default function SmartAssistSidenav({
       )}
 
       {/* ── Insights footer (Regenerate) ── */}
-      {activeTab === 1 && !hideInsightsFooter && (
+      {effectiveTab === 1 && !hideInsightsFooter && (
         <Box
           sx={{
             flexShrink: 0,

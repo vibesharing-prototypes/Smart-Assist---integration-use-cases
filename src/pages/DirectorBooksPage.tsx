@@ -103,6 +103,9 @@ function HeaderCell({
       <Typography
         sx={{
           ...textSx(font.text.sm, fontWeight.emphasis.value),
+          // Pin to 12px — hard-coded so a deploy-time Atlas token update can't
+          // shift the column header scale.
+          fontSize: "12px",
           flex: 1,
           color: color.type.default.value,
           overflow: "hidden",
@@ -191,6 +194,10 @@ function BookRow({
           onClick={onClick}
           sx={{
             ...textSx(font.text.md, fontWeight.emphasis.value),
+            // Pin to 14px — the Atlas tarball a deploy pulls can ship a smaller
+            // text-md scale, which would otherwise shrink table text below the
+            // 14px the admin table hard-codes.
+            fontSize: "14px",
             // Archived books read as muted on the director Books page.
             color: isArchived ? color.type.muted.value : color.type.default.value,
             overflow: "hidden",
@@ -219,7 +226,7 @@ function BookRow({
           maxWidth: COL.meetingDate,
         }}
       >
-        <Typography sx={{ ...textSx(font.text.md), color: color.type.muted.value }}>
+        <Typography sx={{ ...textSx(font.text.md), fontSize: "14px", color: color.type.muted.value }}>
           {book.meetingDate}
         </Typography>
       </Box>
@@ -239,6 +246,7 @@ function BookRow({
           <Typography
             sx={{
               ...textSx(font.text.md),
+              fontSize: "14px",
               color: color.type.muted.value,
               flex: 1,
               overflow: "hidden",
@@ -286,6 +294,7 @@ function BookRow({
             onClick={(e) => e.stopPropagation()}
             sx={{
               ...textSx(font.text.md, fontWeight.emphasis.value),
+              fontSize: "14px",
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",

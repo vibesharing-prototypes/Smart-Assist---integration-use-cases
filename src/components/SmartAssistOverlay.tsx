@@ -655,6 +655,13 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
     setAudience(audience);
   }, [audience, setAudience]);
 
+  // The Insights tab only exists in the GovernAI (book) context. `activeTab`
+  // lives in shared context and persists across navigation, so opening Insights
+  // inside a book and then opening Smart Assist outside one would otherwise
+  // render the Insights view in the content area. Force the chat tab whenever
+  // insights aren't available here.
+  const effectiveTab = showInsights ? activeTab : 0;
+
   // setPrompt is still needed for suggestion card clicks (populate AIChatBox input)
   const { setPrompt } = useAIChatContext();
 
@@ -771,7 +778,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
 
           {overlayLeftPanelOpen && (
             <LeftPanel
-              activeTab={activeTab}
+              activeTab={effectiveTab}
               onTabChange={handleTabChange}
               threads={threads}
               currentThreadId={currentThreadId}
@@ -789,7 +796,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: CHAT_BG, minWidth: 0, position: "relative" }}>
 
             {/* ── Smart Assist tab ── */}
-            {activeTab === 0 && (
+            {effectiveTab === 0 && (
               <>
                 {messages.length === 0 ? (
 
@@ -990,7 +997,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
             )}
 
             {/* ── Insights tab ── */}
-            {activeTab === 1 && (
+            {effectiveTab === 1 && (
               selectedInsight === null
                 ? <InsightsEmptyState />
                 : <InsightDetail view={selectedInsight} bookTitle={bookTitle} scrollRef={insightDetailScrollRef} />

@@ -14,29 +14,22 @@ atlas-gn-app-switcher {
    `.lens-theme` layer to reach the left app nav. We mirror them on
    `.atlas-light-tokens` to also override the Atlas-Light layer. */
 
-/* Global nav menu item label size: force 14px across top-level, tree, and AI nav
-   lists. Hard-coded px so it's identical regardless of which Atlas version a
-   deploy pulls. Scoped to :root as well as the theme layers — the deployed Atlas
-   may consume the var from a scope the theme classes don't cover. */
-.lens-theme,
-.atlas-light-tokens,
-:root {
-  --lens-component-global-nav-list-item-font-size: 14px !important;
-  --lens-component-global-nav-list-tree-item-font-size: 14px !important;
-  --lens-component-global-nav-list-section-title-font-size: 14px !important;
-  --lens-component-global-nav-ai-side-nav-list-item-font-size: 14px !important;
-}
-
-/* Table font sizes: hard-coded px on the table component vars only (NOT the
-   shared semantic tokens, to avoid touching the rest of the app's typography).
-   Current Atlas ships a smaller font scale that otherwise bleeds into tables on
-   the deployed build; these pin cells to 14px and headers to 12px to match the
-   locally installed bundle. */
-.lens-theme,
-.atlas-light-tokens,
-:root {
-  --lens-component-table-cell-font-size: 14px !important;
-  --lens-component-table-header-font-size: 12px !important;
+/* Global nav menu item label size: force 14px.
+   The left app nav web components render their item label font-size from
+   `--lens-semantic-font-text-md-font-size` *inside their shadow DOM* — the
+   `--lens-component-global-nav-list-item-font-size` token is defined but never
+   consumed, so overriding it does nothing. Custom properties inherit through
+   shadow boundaries, so we scope the override to the nav custom elements
+   themselves: this keeps every other Atlas component's text-md untouched while
+   pinning the nav to 14px regardless of which Atlas tarball a deploy pulls. */
+atlas-gn-app,
+atlas-gn-nav-link,
+atlas-gn-nav-section,
+atlas-gn-nav-tree,
+atlas-gn-nav-tree-node,
+atlas-gn-ai-nav-link,
+atlas-gn-ai-nav-section {
+  --lens-semantic-font-text-md-font-size: 14px !important;
 }
 
 /* Atlas font-family update: latest Atlas Light ships Inter Variable for the
