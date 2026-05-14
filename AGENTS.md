@@ -25,29 +25,16 @@ Please prompt the user to get a new key from the Atlas documentation on Confluen
 
 ## Atlas React Bundle dependency
 
-`@diligentcorp/atlas-react-bundle` is **vendored** — the pre-built bundle is
-committed as a plain directory at `vendor/atlas-react-bundle/` and `package.json`
-points at it with a `file:vendor/atlas-react-bundle` dependency. This pins the
-design system to one exact version so local and deployed builds can never drift
-apart.
+We're using an https dependency in the package.json file to install the `@diligentcorp/atlas-react-bundle` package.
 
-Previously this was an `https://atlas.diligent.com/react-bundle.tgz` URL dependency
-with no version, which meant every fresh `npm install` (including deploys) could pull
-a different bundle and silently change theme tokens, fonts, and table styles.
+The contents of the bundle might change over time, so the integrity information in the package lock file might become outdated. You can always use forced methods to update the dependency or packages. Package lock files are intentionally ignored in the .gitignore file.
 
-Notes on the vendored copy:
-- It is committed as an unpacked directory, not a `.tgz` — the VibeSharing import
-  strips tarball files, so a committed `.tgz` would not survive a deploy.
-- Its `package.json` has `devDependencies` and build `scripts` removed. Those
-  pulled private `@diligentcorp/*` packages that are not on the public registry;
-  a vendored pre-built bundle is consumed, never rebuilt, so they are not needed.
-  Keeping them caused `npm install` to 404 on the deploy.
-- Source maps (`*.map`) were dropped to keep the directory lean.
-
-To update Atlas: `npm pack` the freshly installed package, extract it over
-`vendor/atlas-react-bundle/`, re-strip `devDependencies`/`scripts` from its
-`package.json`, delete `*.map` files, then `npm install`. Package lock files
-remain gitignored — the `file:` directory dependency is deterministic on its own.
+**Deploy note:** the bundle is unversioned, so a fresh `npm install` on a deploy
+can pull a different bundle than your local copy and shift theme tokens, fonts,
+and table styling. Vendoring it does not work — VibeSharing's importer strips
+`vendor/` and `.tgz` files. The prototype is deployed by publishing the locally
+built `dist/` as static files (no build step on the host), so the deployed site
+matches whatever Atlas version was installed locally at build time.
 
 ## Styling
 
