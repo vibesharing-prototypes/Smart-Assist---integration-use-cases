@@ -74,11 +74,24 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
   const [audience, setAudienceState] = useState<SmartAssistAudience>("admin");
   const audienceRef = useRef<SmartAssistAudience>("admin");
   audienceRef.current = audience;
+  // Switching persona (director ↔ admin) is a fresh start: wipe all Smart
+  // Assist UI + conversation state so e.g. an Insights tab or GovernAI view
+  // opened as a director doesn't carry over into the admin experience.
   const setAudience = (v: SmartAssistAudience) => {
-    setAudienceState((prev) => {
-      if (prev !== v) setVariantIndex(0);
-      return v;
-    });
+    if (audienceRef.current === v) return;
+    audienceRef.current = v;
+    setAudienceState(v);
+    setVariantIndex(0);
+    setActiveTab(0);
+    setSelectedInsight(null);
+    setPanelOpen(false);
+    setOverlayOpen(false);
+    setPreferredMode(null);
+    setMessages([]);
+    setChatTimestamp(null);
+    setCurrentThreadId(null);
+    setThreadSplitIndex(null);
+    hasInteractedWithThread.current = false;
   };
   const [panelOpen, setPanelOpen] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);

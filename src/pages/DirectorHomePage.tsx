@@ -196,6 +196,9 @@ function BookRow({
           onClick={onClick}
           sx={{
             ...textSx(font.text.md, fontWeight.emphasis.value),
+            // Pin to 14px — hard-coded so a deploy-time Atlas token update can't
+            // shrink the home table's book titles.
+            fontSize: "14px",
             color: color.type.default.value,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -226,6 +229,7 @@ function BookRow({
         <Typography
           sx={{
             ...textSx(font.text.md),
+            fontSize: "14px",
             color: color.type.muted.value,
           }}
         >
@@ -253,6 +257,7 @@ function BookRow({
             onClick={(e) => e.stopPropagation()}
             sx={{
               ...textSx(font.text.md, fontWeight.emphasis.value),
+              fontSize: "14px",
               display: "inline-flex",
               alignItems: "center",
               gap: "8px",
