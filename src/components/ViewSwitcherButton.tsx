@@ -1,10 +1,5 @@
 import { useEffect } from "react";
-
-// ExternalLink (Atlas, size md / 20x20)
-const EXTERNAL_LINK_SVG = `
-<svg class="view-switcher-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path d="M7.06256 13.7038L6.29656 12.9378L10.4841 8.77112H6.72925V7.68783H12.3125V13.2711H11.2292V9.51628L7.06256 13.7038ZM15.5001 10.0003V4.50031H10.0001V3.41699H16.5834V10.0003H15.5001ZM4.7565 16.5836C4.38139 16.5836 4.06432 16.4541 3.80529 16.1951C3.54626 15.936 3.41675 15.619 3.41675 15.2439V3.41699H4.50006V15.2439C4.50006 15.308 4.52677 15.3667 4.58019 15.4202C4.63362 15.4736 4.69239 15.5003 4.7565 15.5003H16.5834V16.5836H4.7565Z" fill="currentColor"/>
-</svg>`;
+import { useNavigate } from "react-router";
 
 const STYLE_ID = "view-switcher-style";
 const HOST_ID = "view-switcher-host";
@@ -48,6 +43,7 @@ type Props = {
 };
 
 export default function ViewSwitcherButton({ label, href }: Props) {
+  const navigate = useNavigate();
   useEffect(() => {
     let attached = false;
     let host: HTMLButtonElement | null = null;
@@ -81,8 +77,15 @@ export default function ViewSwitcherButton({ label, href }: Props) {
         host.setAttribute("slot", "trailing");
         anchor.parentNode!.insertBefore(host, anchor);
       }
-      host.innerHTML = `<span>${label}</span>${EXTERNAL_LINK_SVG}`;
-      host.onclick = () => window.open(href, "_blank", "noopener,noreferrer");
+      host.innerHTML = `<span>${label}</span>`;
+      // Navigate within the SPA (same tab) via React Router. Do NOT use
+      // window.open with an absolute path — that resolves against the host
+      // origin and breaks when the proto is viewed through a VibeSharing
+      // wrapper, landing the user on a VibeSharing page instead.
+      host.onclick = (e) => {
+        e.preventDefault();
+        navigate(href);
+      };
       attached = true;
       return true;
     };
@@ -99,7 +102,7 @@ export default function ViewSwitcherButton({ label, href }: Props) {
       clearInterval(id);
       if (attached) host?.remove();
     };
-  }, [label, href]);
+  }, [label, href, navigate]);
 
   return null;
 }
