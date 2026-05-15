@@ -22,6 +22,7 @@ import SortIcon from "@diligentcorp/atlas-react-bundle/icons/Sort";
 import WorkspacesIcon from "@diligentcorp/atlas-react-bundle/icons/Workspaces";
 import LockedIcon from "@diligentcorp/atlas-react-bundle/icons/Locked";
 
+import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import { useSmartAssist } from "../context/SmartAssistContext.js";
@@ -376,12 +377,20 @@ export default function ResourceCenterPage() {
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
+          borderTopLeftRadius: "24px",
+        }}
+      >
+      <MaxWidthBody
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
           pt: "24px",
           pl: "32px",
           pr: panelOpen ? "12px" : "32px",
           pb: "32px",
           gap: "16px",
-          borderTopLeftRadius: "24px",
           transition: "padding-right 0.3s ease",
         }}
       >
@@ -574,6 +583,7 @@ export default function ResourceCenterPage() {
             )}
           </Box>
         </Box>
+      </MaxWidthBody>
       </Box>
 
       {/* ── Smart Assist sidenav ── */}

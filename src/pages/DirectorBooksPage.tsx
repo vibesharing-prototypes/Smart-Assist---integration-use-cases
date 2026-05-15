@@ -21,6 +21,7 @@ import SortIcon from "@diligentcorp/atlas-react-bundle/icons/Sort";
 
 import BookMoreMenu from "../components/BookMoreMenu.js";
 import { BookStateIcon } from "../components/BookStateIcons.js";
+import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import { useSmartAssist } from "../context/SmartAssistContext.js";
@@ -498,6 +499,7 @@ export default function DirectorBooksPage() {
             "radial-gradient(125.08% 101.36% at 0% 0%, var(--lens-semantic-color-background-base-gradient-start, #f9f9fc) 30.53%, var(--lens-semantic-color-background-base-gradient-end, #fcfcff) 100%)",
         }}
       >
+      <MaxWidthBody>
         <Box
           sx={{
             pl: spacing["4"].value,
@@ -670,6 +672,7 @@ export default function DirectorBooksPage() {
             </Box>
           </Box>
         </Box>
+      </MaxWidthBody>
       </Box>
 
       <SmartAssistSidenav

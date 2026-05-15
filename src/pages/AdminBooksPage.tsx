@@ -20,6 +20,7 @@ import SortIcon from "@diligentcorp/atlas-react-bundle/icons/Sort";
 import ExpandDownIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandDown";
 
 import { BookStateIcon } from "../components/BookStateIcons.js";
+import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import { type AdminBook, type AdminBookStatus, adminBooks } from "../data/mockData.js";
@@ -319,6 +320,14 @@ export default function AdminBooksPage() {
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
+        }}
+      >
+      <MaxWidthBody
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
           pl: "32px",
           pr: panelOpen ? "12px" : "32px",
           pt: "24px",
@@ -469,6 +478,7 @@ export default function AdminBooksPage() {
             </Stack>
           )}
         </Box>
+      </MaxWidthBody>
       </Box>
 
       {/* Smart Assist sidenav */}

@@ -36,6 +36,7 @@ import DocumentIcon from "@diligentcorp/atlas-react-bundle/icons/Document";
 import PageIcon from "@diligentcorp/atlas-react-bundle/icons/Page";
 import KeyIcon from "@diligentcorp/atlas-react-bundle/icons/Key";
 
+import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import DocumentViewerToolbar from "../components/DocumentViewerToolbar.js";
@@ -913,7 +914,8 @@ export default function BookEditorPage() {
 
   return (
     <Box sx={{ display: "flex", height: "100%", overflow: "hidden", background: "radial-gradient(125.08% 101.36% at 0% 0%, var(--lens-semantic-color-background-base-gradient-start, #f9f9fc) 30.53%, var(--lens-semantic-color-background-base-gradient-end, #fcfcff) 100%)" }}>
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", pl: "32px", pr: sidenavOpen ? "12px" : "32px", transition: "padding-right 0.3s ease" }}>
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <MaxWidthBody sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", pl: "32px", pr: sidenavOpen ? "12px" : "32px", transition: "padding-right 0.3s ease" }}>
         {/* Page header */}
         <Box sx={{ position: "relative" }}>
           <Box sx={{ pt: "24px", pb: "0" }}>
@@ -1035,6 +1037,7 @@ export default function BookEditorPage() {
             />
           )}
         </Box>
+      </MaxWidthBody>
       </Box>
 
       {/* GovernAI sidenav */}

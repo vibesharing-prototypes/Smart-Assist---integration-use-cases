@@ -6,6 +6,7 @@ import { AiBadge, AiInaccuracyDisclaimer } from "../components/AiDisclaimers.js"
 import BookMoreMenu from "../components/BookMoreMenu.js";
 import { BookStateIcon } from "../components/BookStateIcons.js";
 import SmartAssistWidget from "../components/SmartAssistWidget.js";
+import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import { useSmartAssist } from "../context/SmartAssistContext.js";
@@ -63,6 +64,8 @@ type CompetitorUpdate = {
   source: string;
   date: string;
   description: string;
+  /** Optional — Explore tab uses this to align cards with the feed filter chips. */
+  company?: "Marriott International" | "Hilton Worldwide Holdings Inc." | "Hyatt Hotels Corporation";
 };
 
 const competitorUpdates: CompetitorUpdate[] = [
@@ -89,27 +92,39 @@ const exploreCompetitorUpdates: CompetitorUpdate[] = [
     date: "August 6, 2025",
     description:
       "A key executive shift is underway at Marriott International. Leeny Oberg, the company's Chief Financial Officer since 2016, will retire on March 31, 2026, after navigating Marriott through pivotal periods including the COVID-19 pandemic. Jen Mason, a veteran Marriott executive currently serving as global treasurer and risk management officer, will succeed Oberg as CFO. Additionally, Shawn Hill is slated to",
+    company: "Marriott International",
   },
   {
-    title: "Marriott finance chief Leeny Oberg to retire next year",
-    source: "Market Screener - Latest",
-    date: "August 6, 2025",
+    title: "Marriott raises full-year RevPAR outlook on stronger group demand",
+    source: "Reuters - Travel & Leisure",
+    date: "August 5, 2025",
     description:
-      "A key executive shift is underway at Marriott International. Leeny Oberg, the company's Chief Financial Officer since 2016, will retire on March 31, 2026, after navigating Marriott through pivotal periods including the COVID-19 pandemic. Jen Mason, a veteran Marriott executive currently serving as global treasurer and risk management officer, will succeed Oberg as CFO. Additionally, Shawn Hill is slated to",
+      "Marriott International lifted the upper end of its 2025 revenue-per-available-room growth forecast to 4% after Q2 group bookings outpaced internal forecasts by roughly 9%. Executives flagged a robust pipeline of corporate offsites and association meetings into 2026, and confirmed plans to add more than 100,000 rooms across luxury and select-service brands by year end. The update lifted Marriott shares 3.4% in pre-market trading.",
+    company: "Marriott International",
   },
   {
-    title: "Marriott finance chief Leeny Oberg to retire next year",
-    source: "Market Screener - Latest",
-    date: "August 6, 2025",
+    title: "Hilton beats Q2 earnings as international travel rebounds",
+    source: "Bloomberg - Hospitality",
+    date: "July 30, 2025",
     description:
-      "A key executive shift is underway at Marriott International. Leeny Oberg, the company's Chief Financial Officer since 2016, will retire on March 31, 2026, after navigating Marriott through pivotal periods including the COVID-19 pandemic. Jen Mason, a veteran Marriott executive currently serving as global treasurer and risk management officer, will succeed Oberg as CFO. Additionally, Shawn Hill is slated to",
+      "Hilton Worldwide reported adjusted EPS of $1.91 for Q2, ahead of the $1.85 consensus, helped by an 11% year-on-year jump in EMEA RevPAR. CEO Chris Nassetta highlighted accelerating leisure demand in Southern Europe and the Middle East, and said development signings reached a record 36,500 rooms during the quarter. The company narrowed its full-year RevPAR guidance to a range of 2% to 3.5%.",
+    company: "Hilton Worldwide Holdings Inc.",
   },
   {
-    title: "Marriott finance chief Leeny Oberg to retire next year",
-    source: "Market Screener - Latest",
-    date: "August 6, 2025",
+    title: "Hilton signs largest luxury pipeline in company history with new Waldorf Astoria deals",
+    source: "Skift",
+    date: "July 22, 2025",
     description:
-      "A key executive shift is underway at Marriott International. Leeny Oberg, the company's Chief Financial Officer since 2016, will retire on March 31, 2026, after navigating Marriott through pivotal periods including the COVID-19 pandemic. Jen Mason, a veteran Marriott executive currently serving as global treasurer and risk management officer, will succeed Oberg as CFO. Additionally, Shawn Hill is slated to",
+      "Hilton announced 14 new Waldorf Astoria and Conrad properties in development across Asia-Pacific and the Middle East, taking its luxury pipeline to roughly 600 hotels — its largest ever. The push reflects the chain's bet that high-end demand will outlast any near-term softening in the broader travel market, and follows the recent reopening of the flagship Waldorf Astoria New York after a multi-year renovation.",
+    company: "Hilton Worldwide Holdings Inc.",
+  },
+  {
+    title: "Hyatt completes $2.6B acquisition of Standard International, expanding lifestyle portfolio",
+    source: "Wall Street Journal",
+    date: "August 1, 2025",
+    description:
+      "Hyatt Hotels Corporation closed its $2.6 billion acquisition of Standard International, adding the Standard, Bunkhouse, and Peri brands to its lifestyle portfolio and bringing its total room count past 365,000. CEO Mark Hoplamazian said the deal more than doubles Hyatt's lifestyle footprint and accelerates its asset-light growth strategy, with management expecting the transaction to be accretive to adjusted EBITDA within 12 months.",
+    company: "Hyatt Hotels Corporation",
   },
 ];
 
@@ -118,8 +133,6 @@ const feedFilters = [
   "Marriott International",
   "Hilton Worldwide Holdings Inc.",
   "Hyatt Hotels Corporation",
-  "Choice Hotels International",
-  "Best Western Hotels & Resorts",
 ];
 
 // ─── BookRow ─────────────────────────────────────────────────────────────────
@@ -597,10 +610,29 @@ function ExploreCompetitorCard({ update }: { update: CompetitorUpdate }) {
       }}
     >
       <Stack sx={{ gap: spacing["1"].value /* 8px */ }}>
+        {/* Title — styled as a link (underline on hover, focus ring) but the
+            click is intentionally a no-op: this prototype doesn't ship article
+            detail pages. Keep it focusable so the affordance reads as real. */}
         <Typography
+          component="button"
+          type="button"
+          onClick={(e) => e.preventDefault()}
           sx={{
             ...textSx(font.text.body, fontWeight.emphasis.value),
             color: color.type.default.value,
+            display: "inline",
+            textAlign: "left",
+            background: "transparent",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            textDecoration: "none",
+            "&:hover": { textDecoration: "underline" },
+            "&:focus-visible": {
+              outline: "2px solid #1C4EE4",
+              outlineOffset: "2px",
+              borderRadius: "2px",
+            },
           }}
         >
           {update.title}
@@ -645,14 +677,19 @@ function ExploreCompetitorCard({ update }: { update: CompetitorUpdate }) {
 
 // ─── CustomizeYourFeedFilter ─────────────────────────────────────────────────
 
-function CustomizeYourFeedFilter() {
+function CustomizeYourFeedFilter({
+  selected,
+  onSelect,
+}: {
+  selected: string;
+  onSelect: (label: string) => void;
+}) {
   const {
     tokens: {
       core: { spacing },
       semantic: { color, radius, font, fontWeight },
     },
   } = useTheme();
-  const [selected, setSelected] = useState("All");
 
   return (
     <Box
@@ -700,7 +737,7 @@ function CustomizeYourFeedFilter() {
               key={label}
               component="button"
               type="button"
-              onClick={() => setSelected(label)}
+              onClick={() => onSelect(label)}
               sx={{
                 height: "36px",
                 display: "inline-flex",
@@ -758,6 +795,13 @@ function CustomizeYourFeedFilter() {
 
 export default function DirectorHomePage() {
   const [tabValue, setTabValue] = useState(0);
+  // "All" or one of the company names from feedFilters. Lifted from the filter
+  // chips so the Explore card list can react to the selection.
+  const [feedFilter, setFeedFilter] = useState<string>("All");
+  const visibleExploreUpdates =
+    feedFilter === "All"
+      ? exploreCompetitorUpdates
+      : exploreCompetitorUpdates.filter((u) => u.company === feedFilter);
   const {
     tokens: {
       core: { spacing },
@@ -802,6 +846,7 @@ export default function DirectorHomePage() {
           "radial-gradient(125.08% 101.36% at 0% 0%, var(--lens-semantic-color-background-base-gradient-start, #f9f9fc) 30.53%, var(--lens-semantic-color-background-base-gradient-end, #fcfcff) 100%)",
       }}
     >
+    <MaxWidthBody sx={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
       {/* Hidden SVG defs — provides the AI gradient referenced by the Explore icon. */}
       <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden>
         <defs>
@@ -949,10 +994,11 @@ export default function DirectorHomePage() {
               />
             </Stack>
 
-            {/* Right column (343) — hidden while the Smart Assist panel is docked,
-                so the panel takes the inline space without crowding the page. */}
+            {/* Right column — adaptive: 343–380px, ~28% of body width.
+                Hidden while the Smart Assist panel is docked, so the panel
+                takes the inline space without crowding the page. */}
             {!panelOpen && (
-              <Box sx={{ width: 343, flexShrink: 0 }}>
+              <Box sx={{ width: "clamp(343px, 28%, 380px)", flexShrink: 0 }}>
                 <Stack sx={{ gap: "24px" }}>
                   <SmartAssistWidget />
                   <Box
@@ -1004,19 +1050,20 @@ export default function DirectorHomePage() {
                 slotProps={{ title: { sx: { fontWeight: 600 } } }}
               />
               <Stack sx={{ gap: "8px", pl: "1px" }}>
-                {exploreCompetitorUpdates.map((update, i) => (
+                {visibleExploreUpdates.map((update, i) => (
                   <ExploreCompetitorCard key={i} update={update} />
                 ))}
               </Stack>
             </Stack>
 
-            {/* Right column (343) */}
-            <Box sx={{ width: 343, flexShrink: 0 }}>
-              <CustomizeYourFeedFilter />
+            {/* Right column — adaptive: 343–380px, ~28% of body width. */}
+            <Box sx={{ width: "clamp(343px, 28%, 380px)", flexShrink: 0 }}>
+              <CustomizeYourFeedFilter selected={feedFilter} onSelect={setFeedFilter} />
             </Box>
           </Box>
         )}
       </div>
+    </MaxWidthBody>
     </Box>
 
       {/* ── Smart Assist sidenav (panel mode) ── */}
