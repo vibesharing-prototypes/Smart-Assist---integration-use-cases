@@ -272,20 +272,9 @@ export default function SmartAssistWidget() {
           </Box>
         </Box>
 
-        {/* Templates */}
-        <Stack sx={{ gap: "8px" }}>
-          <Typography
-            sx={{
-              fontFamily: font.text.md.fontFamily.value,
-              fontSize: font.text.md.fontSize.value,
-              fontWeight: font.text.md.fontWeight.value,
-              lineHeight: "20px",
-              letterSpacing: font.text.md.letterSpacing.value,
-              color: color.type.muted.value,
-            }}
-          >
-            Or start with a template
-          </Typography>
+        {/* Templates — chips sit 8px below the chatbox (parent Stack gap is
+            16px, so pull up 8px). */}
+        <Stack sx={{ mt: "-8px" }}>
           <Box
             sx={{
               display: "flex",

@@ -4,12 +4,15 @@ import { BrowserRouter } from "react-router";
 
 import { AtlasThemeProvider } from "@diligentcorp/atlas-react-bundle";
 import App from "./App";
+import PasswordGate from "./components/PasswordGate.js";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AtlasThemeProvider tokenMode="atlas-light">
-        <App />
+        <PasswordGate>
+          <App />
+        </PasswordGate>
       </AtlasThemeProvider>
     </BrowserRouter>
   </StrictMode>,
