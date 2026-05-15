@@ -478,34 +478,40 @@ function NavTreeItem({ item, activeId, onSelect, depth = 0 }: {
   if (isSection) {
     return (
       <Box>
-        <Stack
-          direction="row"
-          alignItems="center"
-          sx={{
-            pl: `${16 + depth * 16}px`,
-            pr: "4px",
-            py: "7px",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: color.surface.variant.value },
-          }}
+        {/* Mirrors the document-row pattern: outer Box owns depth indent +
+            click target; inner Stack carries the 8px rounded hover background. */}
+        <Box
           onClick={() => { onSelect(item.id); if (item.children) setExpanded((v) => !v); }}
+          sx={{ pl: `${depth * 16}px`, pr: "8px", cursor: "pointer" }}
         >
-          <Typography
+          <Stack
+            direction="row"
+            alignItems="center"
             sx={{
-              fontSize: "13px",
-              color: color.type.default.value,
-              flex: 1,
-              lineHeight: "18px",
+              pl: "12px",
+              pr: "4px",
+              py: "7px",
+              borderRadius: "8px",
+              "&:hover": { backgroundColor: color.surface.variant.value },
             }}
           >
-            {item.label}
-          </Typography>
-          <IconButton size="small" sx={{ p: "2px", flexShrink: 0 }}>
-            {item.children && expanded
-              ? <ExpandDownIcon size="md" />
-              : <ExpandRightIcon size="md" />}
-          </IconButton>
-        </Stack>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                color: color.type.default.value,
+                flex: 1,
+                lineHeight: "18px",
+              }}
+            >
+              {item.label}
+            </Typography>
+            <IconButton size="small" sx={{ p: "2px", flexShrink: 0 }}>
+              {item.children && expanded
+                ? <ExpandDownIcon size="md" />
+                : <ExpandRightIcon size="md" />}
+            </IconButton>
+          </Stack>
+        </Box>
         {expanded && item.children && (
           <Box>
             {item.children.map((child) => (
@@ -1012,6 +1018,7 @@ export default function BookEditorPage() {
                   px: "16px",
                   fontSize: "14px",
                   borderBottom: "none",
+                  borderRadius: "8px",
                   "&:not(.Mui-selected)::after": { display: "none" },
                 },
               }}

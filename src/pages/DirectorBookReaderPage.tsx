@@ -85,39 +85,46 @@ function StructureRow({
   if (isSection) {
     return (
       <Box>
-        <Stack
-          direction="row"
-          alignItems="center"
-          sx={{
-            pl: `${16 + depth * 16}px`,
-            pr: "4px",
-            py: "7px",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: color.surface.variant.value },
-          }}
+        {/* Mirrors the document-row pattern: outer Box owns depth indent +
+            click target; inner Stack carries the visual padding + the 8px
+            rounded hover background. */}
+        <Box
           onClick={() => {
             onSelect(item.id);
             if (item.children) setExpanded((v) => !v);
           }}
+          sx={{ pl: `${depth * 16}px`, pr: "8px", cursor: "pointer" }}
         >
-          <Typography
+          <Stack
+            direction="row"
+            alignItems="center"
             sx={{
-              fontSize: "13px",
-              color: color.type.default.value,
-              flex: 1,
-              lineHeight: "18px",
+              pl: "12px",
+              pr: "4px",
+              py: "7px",
+              borderRadius: "8px",
+              "&:hover": { backgroundColor: color.surface.variant.value },
             }}
           >
-            {item.label}
-          </Typography>
-          <IconButton size="small" sx={{ p: "2px", flexShrink: 0 }}>
-            {item.children && expanded ? (
-              <ExpandDownIcon size="md" />
-            ) : (
-              <ExpandRightIcon size="md" />
-            )}
-          </IconButton>
-        </Stack>
+            <Typography
+              sx={{
+                fontSize: "13px",
+                color: color.type.default.value,
+                flex: 1,
+                lineHeight: "18px",
+              }}
+            >
+              {item.label}
+            </Typography>
+            <IconButton size="small" sx={{ p: "2px", flexShrink: 0 }}>
+              {item.children && expanded ? (
+                <ExpandDownIcon size="md" />
+              ) : (
+                <ExpandRightIcon size="md" />
+              )}
+            </IconButton>
+          </Stack>
+        </Box>
         {expanded && item.children && (
           <Box>
             {item.children.map((child) => (
@@ -375,6 +382,7 @@ function LeftPanel({
               lineHeight: "16px",
               letterSpacing: "0.3px",
               textTransform: "none",
+              borderRadius: "8px",
             },
           }}
         >
@@ -383,8 +391,9 @@ function LeftPanel({
         </Tabs>
       )}
 
-      {/* Body */}
-      <Box sx={{ flex: 1, overflowY: "auto", pt: "4px", pb: "8px" }}>
+      {/* Body — 12px side padding mirrors the menu bar / tabs above so the
+          document tree sits inset from the panel outline, matching admin. */}
+      <Box sx={{ flex: 1, overflowY: "auto", pt: "4px", pb: "8px", px: "12px" }}>
         {menuTab === "content" && innerTab === 0 && (
           <Box>
             {navStructure.map((item) => (
