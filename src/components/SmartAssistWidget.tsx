@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Button, InputBase, Stack, Typography, useTheme } from "@mui/material";
 
+import ArrowUpIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowUp";
 import ExpandDownIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandDown";
 import ExpandRightIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandRight";
 
@@ -236,6 +237,7 @@ export default function SmartAssistWidget() {
             <Box
               component="button"
               type="button"
+              aria-label="Start chat"
               onClick={submit}
               disabled={!canSubmit}
               sx={{
@@ -246,16 +248,11 @@ export default function SmartAssistWidget() {
                 alignItems: "center",
                 justifyContent: "center",
                 height: "24px",
-                px: "8px",
+                width: "24px",
                 borderRadius: "8px",
                 border: `1px solid ${color.action.secondary.outline.value}`,
                 backgroundColor: "transparent",
                 color: color.action.secondary.onSecondary.value,
-                fontFamily: font.label.sm.fontFamily.value,
-                fontSize: font.label.sm.fontSize.value,
-                fontWeight: fontWeight.emphasis.value,
-                lineHeight: font.label.sm.lineHeight.value,
-                letterSpacing: font.label.sm.letterSpacing.value,
                 opacity: canSubmit ? 1 : 0.4,
                 transition: "background-color 0.15s ease",
                 "&:hover": canSubmit
@@ -267,7 +264,7 @@ export default function SmartAssistWidget() {
                 },
               }}
             >
-              Start chat
+              <ArrowUpIcon size="md" />
             </Box>
           </Box>
         </Box>
