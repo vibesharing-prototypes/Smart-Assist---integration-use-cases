@@ -196,21 +196,22 @@ export default function PasswordGate({ children }: PasswordGateProps) {
           >
             <Stack gap="16px">
               <Stack gap="4px">
-                {/* Explicitly tokenized label instead of MUI's floating
-                    InputLabel: the host's Atlas build can drift to a version
-                    whose MuiInputLabel default font differs from local, which
-                    left this label rendering in the wrong (bold, non-Inter)
-                    typeface only on the deployed prototype. */}
+                {/* Hardcoded literal values, NOT Atlas token references: the
+                    deployed host's `npm install` can pull a drifted Atlas, so
+                    `font.label.*.value` resolves to the wrong typeface there.
+                    Reading Atlas tokens cannot fix Atlas drift — only literals
+                    render identically on local and deployed. Spec is the Atlas
+                    label/sm style (Inter 12px / 500 / 16px / 0.3px). */}
                 <Typography
                   component="label"
                   htmlFor="password-gate-input"
                   sx={{
-                    fontFamily: font.label.sm.fontFamily.value,
-                    fontSize: font.label.sm.fontSize.value,
-                    fontWeight: font.label.sm.fontWeight.value,
-                    lineHeight: font.label.sm.lineHeight.value,
-                    letterSpacing: font.label.sm.letterSpacing.value,
-                    color: color.type.default.value,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    lineHeight: "16px",
+                    letterSpacing: "0.3px",
+                    color: "#242628",
                   }}
                 >
                   Password
