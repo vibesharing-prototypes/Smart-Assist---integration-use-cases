@@ -471,7 +471,31 @@ export default function DirectorBookReaderPage() {
     closeOverlay,
     expandToOverlay,
     collapseToPanel,
+    bookPanelDismissed,
+    setBookPanelDismissed,
   } = useSmartAssist();
+
+  // GovernAI opens automatically when the director enters a book, unless they
+  // closed it earlier this session — that choice is remembered (panel stays
+  // closed) until the browser is refreshed.
+  const openBookPanel = () => {
+    setBookPanelDismissed(false);
+    openInBook();
+  };
+  const dismissBookPanel = () => {
+    setBookPanelDismissed(true);
+    closePanel();
+  };
+  const dismissBookOverlay = () => {
+    setBookPanelDismissed(true);
+    closeOverlay();
+  };
+
+  useEffect(() => {
+    if (!bookPanelDismissed && !sidenavOpen && !overlayOpen) openInBook();
+    // Run once on entering the book; dismissal state gates the auto-open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeNavId, setActiveNavId] = useState(
     isQ2BoardPackage ? `doc:${q2BoardPackagePages[0].documentId}` : "s1-2-1-1-d1",
@@ -617,7 +641,7 @@ export default function DirectorBookReaderPage() {
               variant="outlined"
               color="ai"
               startIcon={<AiSparkleIcon size="lg" />}
-              onClick={sidenavOpen ? closePanel : openInBook}
+              onClick={sidenavOpen ? dismissBookPanel : openBookPanel}
               aria-pressed={sidenavOpen}
               sx={{
                 height: 40,
@@ -799,7 +823,7 @@ export default function DirectorBookReaderPage() {
         >
           <SmartAssistSidenav
             open={sidenavOpen}
-            onClose={closePanel}
+            onClose={dismissBookPanel}
             onExpand={expandToOverlay}
             bookTitle={book.title}
             title="GovernAI"
@@ -813,7 +837,7 @@ export default function DirectorBookReaderPage() {
 
       <SmartAssistOverlay
         open={overlayOpen}
-        onClose={closeOverlay}
+        onClose={dismissBookOverlay}
         onCollapse={collapseToPanel}
         bookTitle={book.title}
         showInsights

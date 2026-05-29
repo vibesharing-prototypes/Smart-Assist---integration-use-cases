@@ -34,6 +34,11 @@ interface SmartAssistContextValue {
   closeOverlay: () => void;
   expandToOverlay: () => void;
   collapseToPanel: () => void;
+  // Session-only memory of the director closing GovernAI inside a book. Once
+  // true, re-entering a book keeps the panel closed until the page is
+  // refreshed (in-memory state resets on full reload).
+  bookPanelDismissed: boolean;
+  setBookPanelDismissed: (v: boolean) => void;
   handleSend: (text: string, opts?: { newSession?: boolean }) => void;
   handleToggleSource: (id: string) => void;
   resetChat: () => void;
@@ -87,6 +92,7 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
     setPanelOpen(false);
     setOverlayOpen(false);
     setPreferredMode(null);
+    setBookPanelDismissed(false);
     setMessages([]);
     setChatTimestamp(null);
     setCurrentThreadId(null);
@@ -106,6 +112,7 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
   const [threadSplitIndex, setThreadSplitIndex] = useState<number | null>(null);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [overlayLeftPanelOpen, setOverlayLeftPanelOpen] = useState(true);
+  const [bookPanelDismissed, setBookPanelDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [selectedInsight, setSelectedInsight] = useState<"summary" | "prep" | "risk" | null>(null);
   // Tracks last activity time for each thread (overrides updatedAt for sort order)
@@ -223,6 +230,8 @@ function SmartAssistProviderInner({ children }: { children: React.ReactNode }) {
         closeOverlay: () => setOverlayOpen(false),
         expandToOverlay: () => { setPanelOpen(false); setOverlayOpen(true); setPreferredMode("overlay"); },
         collapseToPanel: () => { setOverlayOpen(false); setPanelOpen(true); setPreferredMode("panel"); },
+        bookPanelDismissed,
+        setBookPanelDismissed,
         handleSend,
         handleToggleSource,
         resetChat: () => {
