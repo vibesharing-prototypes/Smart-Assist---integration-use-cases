@@ -195,23 +195,43 @@ export default function PasswordGate({ children }: PasswordGateProps) {
             }}
           >
             <Stack gap="16px">
-              <TextField
-                inputRef={inputRef}
-                type="password"
-                label="Password"
-                value={value}
-                onChange={(e) => {
-                  setValue(e.target.value);
-                  if (error) setError(false);
-                }}
-                error={error}
-                helperText={error ? "Incorrect password. Try again." : undefined}
-                fullWidth
-                size="small"
-                autoComplete="current-password"
-                InputLabelProps={{ shrink: true }}
-                disabled={checking}
-              />
+              <Stack gap="4px">
+                {/* Explicitly tokenized label instead of MUI's floating
+                    InputLabel: the host's Atlas build can drift to a version
+                    whose MuiInputLabel default font differs from local, which
+                    left this label rendering in the wrong (bold, non-Inter)
+                    typeface only on the deployed prototype. */}
+                <Typography
+                  component="label"
+                  htmlFor="password-gate-input"
+                  sx={{
+                    fontFamily: font.label.sm.fontFamily.value,
+                    fontSize: font.label.sm.fontSize.value,
+                    fontWeight: font.label.sm.fontWeight.value,
+                    lineHeight: font.label.sm.lineHeight.value,
+                    letterSpacing: font.label.sm.letterSpacing.value,
+                    color: color.type.default.value,
+                  }}
+                >
+                  Password
+                </Typography>
+                <TextField
+                  id="password-gate-input"
+                  inputRef={inputRef}
+                  type="password"
+                  value={value}
+                  onChange={(e) => {
+                    setValue(e.target.value);
+                    if (error) setError(false);
+                  }}
+                  error={error}
+                  helperText={error ? "Incorrect password. Try again." : undefined}
+                  fullWidth
+                  size="small"
+                  autoComplete="current-password"
+                  disabled={checking}
+                />
+              </Stack>
               <Button type="submit" variant="contained" fullWidth disabled={checking}>
                 Continue
               </Button>
