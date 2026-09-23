@@ -483,7 +483,7 @@ export default function ResourceCenterPage() {
                       "&:hover::before, &::after, &:hover::after": { display: "none" },
                     }}
                   >
-                    Smart Assist
+                    Ask GovernAI
                   </Button>
                 )}
                 <Button

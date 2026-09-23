@@ -452,7 +452,7 @@ function LeftPanel({
             // inset 20px by the wrapper) under the whole tab group.
             sx={{ "&::after": { zIndex: 0 } }}
           >
-            <Tab label={audience === "director" ? "AI Board Member" : "Smart Assist"} id="sa-overlay-tab-0" aria-controls="sa-overlay-tabpanel-0" />
+            <Tab label="Ask GovernAI" id="sa-overlay-tab-0" aria-controls="sa-overlay-tabpanel-0" />
             <Tab label="Insights" id="sa-overlay-tab-1" aria-controls="sa-overlay-tabpanel-1" />
           </Tabs>
         </Box>
@@ -464,8 +464,7 @@ function LeftPanel({
         ) : (
           <InsightTOC selectedInsight={selectedInsight} onBack={() => onInsightSelect(null)} scrollContainerRef={detailScrollRef} />
         )
-      ) : audience === "director" ? (
-        /* ── Director full-screen left panel ── */
+      ) : (
         <Box
           sx={{
             flex: 1,
@@ -851,118 +850,6 @@ function LeftPanel({
               </Box>
             )}
           </Box>
-
-        </Box>
-      ) : (
-        /* ── Admin full-screen left panel (unchanged) ── */
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            pt: "24px",
-            pl: "20px",
-          }}
-        >
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<AddCircleIcon size="lg" />}
-            onClick={onNewChat}
-            sx={{
-              height: "24px",
-              pl: "8px !important",
-              pr: "8px !important",
-              py: "4px",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: 600,
-              lineHeight: "16px",
-              letterSpacing: "0.3px",
-              color: "#242628",
-              textTransform: "none",
-              "& .MuiButton-startIcon": { marginRight: "4px !important", color: "#242628" },
-              alignSelf: "flex-start",
-            }}
-          >
-            New chat
-          </Button>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: "24px", pl: "12px", pr: "8px" }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, lineHeight: "16px", letterSpacing: "0.3px", color: color.type.muted.value }}>
-              Chat history
-            </Typography>
-            {threads.length > 0 && <DeleteAllChatsMenu onDeleteAll={onDeleteAll} />}
-          </Stack>
-
-          <Box sx={{ flex: 1, overflowY: "auto", pr: "8px", mt: "8px" }}>
-            {isNewChatActive && (
-              <Box
-                sx={{
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(0,0,0,0.04)",
-                  px: "12px",
-                  py: "8px",
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  lineHeight: "20px",
-                  color: TEXT_DEFAULT,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                New chat
-              </Box>
-            )}
-            {threads.length === 0 && !isNewChatActive ? (
-              <Typography sx={({ tokens: { semantic: { color } } }) => ({ fontSize: "12px", fontWeight: 600, lineHeight: "16px", letterSpacing: "0.3px", color: color.type.muted.value, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", pl: "12px", pt: "4px" })}>
-                No recent chats
-              </Typography>
-            ) : (
-              <Stack>
-                {threads.map((thread) => (
-                  <ChatThreadItem
-                    key={thread.id}
-                    thread={thread}
-                    variant="overlay"
-                    isActive={currentThreadId === thread.id}
-                    onLoadThread={onLoadThread}
-                    onNewChat={onNewChat}
-                  />
-                ))}
-              </Stack>
-            )}
-          </Box>
-
-          {onPreferences && (
-            <Box
-              sx={({ tokens: { semantic: { color } } }) => ({
-                flexShrink: 0,
-                borderTop: `1px solid ${PANEL_DIVIDER}`,
-                p: "12px",
-                backgroundColor: color.surface.default.value,
-                display: "flex",
-                justifyContent: "flex-end",
-              })}
-            >
-              <Button
-                variant="text"
-                size="small"
-                startIcon={<SettingsIcon size="md" />}
-                onClick={onPreferences}
-                sx={({ tokens: { semantic: { color } } }) => ({
-                  textTransform: "none",
-                  color: color.type.default.value,
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  "& .MuiButton-startIcon": { color: color.type.default.value },
-                })}
-              >
-                Preferences
-              </Button>
-            </Box>
-          )}
 
         </Box>
       )}
@@ -1867,9 +1754,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
               ? bookTitle
                 ? `GovernAI – ${bookTitle}`
                 : "GovernAI"
-              : audience === "director"
-                ? "AI Board Member"
-                : "Smart Assist"}
+              : "Ask GovernAI"}
           </Typography>
 
           <Stack direction="row" gap="8px" alignItems="center">
@@ -2111,7 +1996,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                                 <AIChatAIMessage
                                   header={
                                     <AIChatMessageHeader
-                                      name={audience === "director" ? "AI Board Member" : "Smart Assist"}
+                                      name="Ask GovernAI"
                                       time={msg.timestamp}
                                       avatar={<AIChatMessageAvatar uniqueId="smart-assist" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                                     />
@@ -2143,7 +2028,7 @@ export default function SmartAssistOverlay({ open, onClose, onCollapse, bookTitl
                             <AIChatAIMessage
                               header={
                                 <AIChatMessageHeader
-                                  name={audience === "director" ? "AI Board Member" : "Smart Assist"}
+                                  name="Ask GovernAI"
                                   time=""
                                   avatar={<AIChatMessageAvatar uniqueId="smart-assist-thinking" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                                 />

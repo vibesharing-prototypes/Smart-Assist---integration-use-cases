@@ -306,7 +306,7 @@ export default function DirectorResourceCenterPage() {
                   "&:hover::before, &::after, &:hover::after": { display: "none" },
                 }}
               >
-                AI Board Member
+                Ask GovernAI
               </Button>
             )}
           </Stack>

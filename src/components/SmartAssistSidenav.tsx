@@ -353,7 +353,7 @@ export default function SmartAssistSidenav({
                 whiteSpace: "nowrap",
               }}
             >
-              {title ?? (audience === "director" ? "AI Board Member" : "Smart Assist")}
+              {title ?? "Ask GovernAI"}
             </Typography>
           </Stack>
           <Stack direction="row" alignItems="center" gap="6px" sx={{ flexShrink: 0 }}>
@@ -388,7 +388,7 @@ export default function SmartAssistSidenav({
               // line under the whole tab group (full panel width in the dock).
               sx={{ "& .MuiTabs-flexContainer": { pl: "16px" }, "&::after": { zIndex: 0 } }}
             >
-              <Tab label={audience === "director" ? "AI Board Member" : "Smart Assist"} id="sa-panel-tab-0" aria-controls="sa-panel-tabpanel-0" />
+              <Tab label="Ask GovernAI" id="sa-panel-tab-0" aria-controls="sa-panel-tabpanel-0" />
               <Tab label="Insights" id="sa-panel-tab-1" aria-controls="sa-panel-tabpanel-1" />
             </Tabs>
           </Box>
@@ -533,7 +533,7 @@ export default function SmartAssistSidenav({
                     <AIChatAIMessage
                       header={
                         <AIChatMessageHeader
-                          name={audience === "director" ? "AI Board Member" : "Smart Assist"}
+                          name="Ask GovernAI"
                           time={msg.timestamp}
                           avatar={<AIChatMessageAvatar uniqueId="smart-assist" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                         />
@@ -565,7 +565,7 @@ export default function SmartAssistSidenav({
                 <AIChatAIMessage
                   header={
                     <AIChatMessageHeader
-                      name={audience === "director" ? "AI Board Member" : "Smart Assist"}
+                      name="Ask GovernAI"
                       time=""
                       avatar={<AIChatMessageAvatar uniqueId="smart-assist-thinking" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                     />

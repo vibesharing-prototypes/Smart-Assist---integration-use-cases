@@ -297,7 +297,7 @@ export default function DirectorHomeSearch() {
             Stack gap. */}
         <Box sx={{ display: "flex", justifyContent: "center", mt: "4px" }}>
           <Button variant="text" size="small" onClick={openSmartAssist}>
-            Open AI Board Member
+            Ask GovernAI
           </Button>
         </Box>
       </Stack>

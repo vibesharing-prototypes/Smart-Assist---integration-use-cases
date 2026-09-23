@@ -378,7 +378,7 @@ export default function AdminBooksPage() {
                 "&:hover::before, &::after, &:hover::after": { display: "none" },
               }}
             >
-              Smart Assist
+              Ask GovernAI
             </Button>
           )}
         </Stack>
