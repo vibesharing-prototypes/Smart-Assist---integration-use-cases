@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
 import LinkIcon from "@diligentcorp/atlas-react-bundle/icons/Link";
 import CheckedIcon from "@diligentcorp/atlas-react-bundle/icons/Checked";
@@ -86,8 +86,10 @@ function FallbackDocument({ source, zoomPct }: { source: Source; zoomPct: number
 export default function CitationPreviewPanel() {
   const { tokens: { semantic: { color } } } = useTheme();
   const { previewSource, previewPage, previewContext, setPreviewPage, closeCitation } = useCitationPreview();
-  const { overlayOpen, collapseToPanel, openPanel, audience } = useSmartAssist();
+  const { overlayOpen, collapseToPanel, openPanel } = useSmartAssist();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDirectorRoute = location.pathname.startsWith("/director");
 
   const [zoomIndex, setZoomIndex] = useState(2); // 100%
   const [copied, setCopied] = useState(false);
@@ -118,9 +120,9 @@ export default function CitationPreviewPanel() {
     // Close the full-screen overlay but keep the AI panel visible alongside the book.
     if (overlayOpen) collapseToPanel();
     else openPanel();
-    // Route to the audience-appropriate book reader. Works for both chat and
-    // Insight citations.
-    if (audience === "director") {
+    // Route to the correct book reader based on the current route, not the
+    // async-synced context audience value (which can lag on first render).
+    if (isDirectorRoute) {
       navigate(`/director/books/${targetDoc.bookId}`, {
         state: { documentId, documentPage },
       });

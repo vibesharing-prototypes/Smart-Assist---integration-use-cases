@@ -13,9 +13,12 @@ import {
   smartRiskEmptyCategories,
   smartRiskSources,
   SMART_RISK_DISCLAIMER,
+  auditBrief,
+  auditBriefSources,
   type SummarySection,
   type PrepInsight,
   type RiskFinding,
+  type AuditTriageMatter,
 } from "../data/mockData.js";
 import RichAIMessageContent, { parseCiteText, type CiteCounter } from "./RichAIMessageContent.js";
 import type { Span } from "../data/hybrid-search.constants.js";
@@ -462,5 +465,337 @@ export function InsightRiskView() {
       )}
       <FooterDisclaimer extra={SMART_RISK_DISCLAIMER} />
     </Stack>
+  );
+}
+
+// ─── Audit Smart Prep View ───────────────────────────────────────────────────
+
+type AuditVariant = "accordion" | "scroll" | "questions";
+
+// Audit Smart Prep - Three interactive variants for ideation
+export function InsightAuditView() {
+  const [variant, setVariant] = useState<AuditVariant>("accordion");
+
+  return (
+    <Stack spacing="24px">
+      {/* Variant selector */}
+      <Box sx={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+        <Button
+          variant={variant === "accordion" ? "contained" : "outlined"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setVariant("accordion");
+          }}
+          sx={{ textTransform: "none" }}
+        >
+          Accordion
+        </Button>
+        <Button
+          variant={variant === "scroll" ? "contained" : "outlined"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setVariant("scroll");
+          }}
+          sx={{ textTransform: "none" }}
+        >
+          Scroll + Rail
+        </Button>
+        <Button
+          variant={variant === "questions" ? "contained" : "outlined"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setVariant("questions");
+          }}
+          sx={{ textTransform: "none" }}
+        >
+          Question-Led
+        </Button>
+      </Box>
+
+      {variant === "accordion" && <AuditAccordionView />}
+      {variant === "scroll" && <AuditScrollView />}
+      {variant === "questions" && <AuditQuestionView />}
+
+      <FooterDisclaimer />
+    </Stack>
+  );
+}
+
+// ─── Variant A: Accordion ────────────────────────────────────────────────────
+
+function AuditAccordionView() {
+  const [expandedMatter, setExpandedMatter] = useState<number | null>(null);
+  const { tokens: { semantic: { color } } } = useTheme();
+
+  return (
+    <Stack spacing="16px">
+      {/* Opening read */}
+      <DetailCard>
+        <Stack spacing="16px">
+          <CardTitle>{auditBrief.title}</CardTitle>
+          <BodyText>{auditBrief.openingRead}</BodyText>
+        </Stack>
+      </DetailCard>
+
+      {/* Triage list with accordions */}
+      <DetailCard>
+        <Stack spacing="16px">
+          <SubLabel>{auditBrief.triageMatters.length} matters stand out</SubLabel>
+          <Stack spacing="8px">
+            {auditBrief.triageMatters.map((matter) => (
+              <Box key={matter.number}>
+                <Box
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setExpandedMatter(expandedMatter === matter.number ? null : matter.number);
+                  }}
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: "8px",
+                    p: "12px",
+                    cursor: "pointer",
+                    borderRadius: "4px",
+                    "&:hover": {
+                      backgroundColor: color.surface.variant.value,
+                    },
+                  }}
+                >
+                  <Box sx={{ flexShrink: 0, mt: "2px" }}>
+                    {expandedMatter === matter.number ? "▼" : "▶"}
+                  </Box>
+                  <BodyText>
+                    <strong>{matter.number}.</strong> {matter.triageLine}
+                  </BodyText>
+                </Box>
+                {expandedMatter === matter.number && (
+                  <Box sx={{ mt: "8px", pl: "28px", pr: "12px", pb: "12px" }}>
+                    <MatterDetailBlock matter={matter} />
+                  </Box>
+                )}
+              </Box>
+            ))}
+          </Stack>
+        </Stack>
+      </DetailCard>
+
+      {/* Lower priority */}
+      <LowerPriorityCard />
+    </Stack>
+  );
+}
+
+// ─── Variant B: Scroll + Rail ────────────────────────────────────────────────
+
+function AuditScrollView() {
+  const { tokens: { semantic: { color } } } = useTheme();
+
+  return (
+    <Stack spacing="16px">
+      {/* Severity count header */}
+      <DetailCard>
+        <Typography sx={{ fontSize: "13px", fontWeight: 600, color: color.type.default.value }}>
+          ({auditBrief.severityCounts.critical} critical · {auditBrief.severityCounts.high} high ·{" "}
+          {auditBrief.severityCounts.moderate} moderate)
+        </Typography>
+      </DetailCard>
+
+      {/* Opening read */}
+      <DetailCard id="opening">
+        <Stack spacing="16px">
+          <CardTitle>{auditBrief.title}</CardTitle>
+          <BodyText>{auditBrief.openingRead}</BodyText>
+        </Stack>
+      </DetailCard>
+
+      {/* All matters */}
+      {auditBrief.triageMatters.map((matter) => (
+        <DetailCard key={matter.number} id={`matter-${matter.number}`}>
+          <Stack spacing="16px">
+            <CardTitle>
+              {matter.number} · {matter.title}
+            </CardTitle>
+            <BodyText>{matter.framingSentence}</BodyText>
+            <MatterDetailBlock matter={matter} />
+          </Stack>
+        </DetailCard>
+      ))}
+
+      {/* Lower priority */}
+      <Box id="lower-priority">
+        <LowerPriorityCard />
+      </Box>
+    </Stack>
+  );
+}
+
+// ─── Variant C: Question-Led ─────────────────────────────────────────────────
+
+function AuditQuestionView() {
+  const [expandedFigures, setExpandedFigures] = useState<number[]>([]);
+  const [expandedResolve, setExpandedResolve] = useState<number[]>([]);
+  const { tokens: { semantic: { color } } } = useTheme();
+
+  const toggleFigures = (num: number) => {
+    setExpandedFigures(prev =>
+      prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num]
+    );
+  };
+
+  const toggleResolve = (num: number) => {
+    setExpandedResolve(prev =>
+      prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num]
+    );
+  };
+
+  return (
+    <Stack spacing="16px">
+      {/* Opening read */}
+      <DetailCard>
+        <Stack spacing="16px">
+          <CardTitle>{auditBrief.title}</CardTitle>
+          <BodyText>{auditBrief.openingRead}</BodyText>
+        </Stack>
+      </DetailCard>
+
+      {/* Question-led matters */}
+      {auditBrief.triageMatters.map((matter) => (
+        <DetailCard key={matter.number}>
+          <Stack spacing="20px">
+            <CardTitle>
+              {matter.number} · {matter.title}
+            </CardTitle>
+            <BodyText>{matter.framingSentence}</BodyText>
+
+            {/* Questions prominent */}
+            <Stack spacing="12px">
+              <SubLabel>Suggested questions</SubLabel>
+              <Stack spacing="12px" sx={{ pl: "8px" }}>
+                {matter.suggestedQuestions.map((q, i) => (
+                  <BodyText key={i} sx={{ fontSize: "15px", lineHeight: "24px" }}>
+                    • {q}
+                  </BodyText>
+                ))}
+              </Stack>
+            </Stack>
+
+            {/* Collapsible figures */}
+            <Box>
+              <Box
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFigures(matter.number);
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  p: "4px 0",
+                  "&:hover": { opacity: 0.8 },
+                }}
+              >
+                <SubLabel>See supporting figures</SubLabel>
+                <span>{expandedFigures.includes(matter.number) ? "▼" : "▶"}</span>
+              </Box>
+              {expandedFigures.includes(matter.number) && (
+                <Stack spacing="8px" sx={{ mt: "12px", pl: "8px" }}>
+                  {matter.figures.map((fig, i) => (
+                    <FigureItem key={i} figure={fig} />
+                  ))}
+                </Stack>
+              )}
+            </Box>
+
+            {/* Collapsible to resolve */}
+            <Box>
+              <Box
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleResolve(matter.number);
+                }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  p: "4px 0",
+                  "&:hover": { opacity: 0.8 },
+                }}
+              >
+                <SubLabel>See action suggestions</SubLabel>
+                <span>{expandedResolve.includes(matter.number) ? "▼" : "▶"}</span>
+              </Box>
+              {expandedResolve.includes(matter.number) && (
+                <Box sx={{ mt: "12px" }}>
+                  <BulletList items={matter.toResolve} />
+                </Box>
+              )}
+            </Box>
+          </Stack>
+        </DetailCard>
+      ))}
+
+      <LowerPriorityCard />
+    </Stack>
+  );
+}
+
+// ─── Shared components ───────────────────────────────────────────────────────
+
+function MatterDetailBlock({ matter }: { matter: AuditTriageMatter }) {
+  return (
+    <Stack spacing="16px">
+      <Stack spacing="8px">
+        <SubLabel>Suggested questions</SubLabel>
+        <BulletList items={matter.suggestedQuestions} />
+      </Stack>
+
+      <Stack spacing="8px">
+        <SubLabel>The figures</SubLabel>
+        <Stack spacing="8px">
+          {matter.figures.map((fig, i) => (
+            <FigureItem key={i} figure={fig} />
+          ))}
+        </Stack>
+      </Stack>
+
+      <Stack spacing="8px">
+        <SubLabel>To resolve</SubLabel>
+        <BulletList items={matter.toResolve} />
+      </Stack>
+    </Stack>
+  );
+}
+
+function FigureItem({ figure }: { figure: { value: string; description: string; citation: string; citationIndex?: number } }) {
+  const { tokens: { semantic: { color, fontWeight } } } = useTheme();
+
+  return (
+    <BodyText>
+      <strong style={{ fontWeight: fontWeight.emphasis.value }}>{figure.value}</strong> — {figure.description}{" "}
+      <span style={{ color: color.type.muted.value }}>{figure.citation}</span>
+    </BodyText>
+  );
+}
+
+function LowerPriorityCard() {
+  return (
+    <DetailCard>
+      <Stack spacing="12px">
+        <SubLabel>Lower priority, likely only if raised</SubLabel>
+        <Stack spacing="12px">
+          {auditBrief.lowerPriority.map((item, i) => (
+            <BodyText key={i}>• {item}</BodyText>
+          ))}
+        </Stack>
+      </Stack>
+    </DetailCard>
   );
 }

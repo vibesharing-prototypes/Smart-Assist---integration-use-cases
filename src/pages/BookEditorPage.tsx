@@ -871,6 +871,15 @@ export default function BookEditorPage() {
     }
   }, []);
 
+  // Open GovernAI by default whenever the book editor mounts or switches
+  // books. Honors the session mode preference via openInBook (panel by
+  // default; overlay if the user switched earlier this session).
+  const openInBookRef = useRef(openInBook);
+  openInBookRef.current = openInBook;
+  useEffect(() => {
+    openInBookRef.current();
+  }, [id]);
+
   const handleGovernAI = openInBook;
   const handleExpand = expandToOverlay;
   const handleCollapse = collapseToPanel;

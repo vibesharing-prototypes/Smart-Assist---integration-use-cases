@@ -135,6 +135,7 @@ export default function AIAssistantPage() {
             {messages.map((message, index) => (
               <Card
                 key={index}
+                elevation={message.role === 'user' ? 0 : undefined}
                 sx={{
                   alignSelf: message.role === 'user' ? 'flex-end' : 'flex-start',
                   maxWidth: '70%',
@@ -142,6 +143,9 @@ export default function AIAssistantPage() {
                     message.role === 'user'
                       ? 'primary.main'
                       : 'background.paper',
+                  ...(message.role === 'user' && {
+                    boxShadow: 'inset 0 0 0 1px #DEE0E9',
+                  }),
                 }}
               >
                 <CardContent>

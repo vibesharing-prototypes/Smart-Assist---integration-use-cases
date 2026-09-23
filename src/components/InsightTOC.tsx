@@ -9,6 +9,7 @@ import {
   smartSummarySources,
   smartPrepInsights,
   smartRiskFindings,
+  auditBrief,
   type Source,
 } from "../data/mockData.js";
 import {
@@ -34,10 +35,11 @@ function citedSources(text: string): Source[] {
   return out;
 }
 
-const INSIGHT_LABELS: Record<"summary" | "prep" | "risk", string> = {
+const INSIGHT_LABELS: Record<"summary" | "prep" | "risk" | "audit", string> = {
   summary: "Smart Summary",
   prep: "Smart Prep",
   risk: "Smart Risk Scanner",
+  audit: "Audit Smart Prep",
 };
 
 /** Scroll a same-document anchor into view, scoped to a container ref. */
@@ -315,7 +317,7 @@ export default function InsightTOC({
   onBack,
   scrollContainerRef,
 }: {
-  selectedInsight: "summary" | "prep" | "risk";
+  selectedInsight: "summary" | "prep" | "risk" | "audit";
   onBack: () => void;
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }) {
@@ -348,6 +350,20 @@ export default function InsightTOC({
             id: riskFindingId(f.category),
             label: `${i + 1}. ${f.category}`,
           }))}
+          activeId={activeId}
+          onSelect={handleSelect}
+        />
+      )}
+      {selectedInsight === "audit" && (
+        <FlatTOC
+          items={[
+            { id: "opening", label: "Opening read" },
+            ...auditBrief.triageMatters.map((matter) => ({
+              id: `matter-${matter.number}`,
+              label: `${matter.number}. ${matter.title}`,
+            })),
+            { id: "lower-priority", label: "Lower priority" },
+          ]}
           activeId={activeId}
           onSelect={handleSelect}
         />

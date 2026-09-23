@@ -1,7 +1,8 @@
-import { RoutedNavLink, NavLink } from "@diligentcorp/atlas-react-bundle/global-nav";
+import { RoutedNavLink, NavLink, NavSection } from "@diligentcorp/atlas-react-bundle/global-nav";
 import CurrentBooksIcon from "@diligentcorp/atlas-react-bundle/icons/CurrentBooks";
 import HomeIcon from "@diligentcorp/atlas-react-bundle/icons/Home";
 import ResourceCenterIcon from "@diligentcorp/atlas-react-bundle/icons/ResourceCenter";
+import OrganizationIcon from "@diligentcorp/atlas-react-bundle/icons/Organization";
 import ExpandLeftIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandLeft";
 import { SvgIcon } from "@mui/material";
 import QuestionnairesIcon from "@diligentcorp/atlas-react-bundle/icons/Questionnaires";
@@ -10,6 +11,14 @@ import { NavLink as RouterNavLink, useLocation } from "react-router";
 import AppNavHeader from "./components/AppNavHeader.js";
 
 type Persona = "admin" | "director";
+
+function BoardsNavLink() {
+  return (
+    <NavLink label="Boards" as="span" style={{ marginTop: "12px" }}>
+      <ExpandLeftIcon slot="icon" />
+    </NavLink>
+  );
+}
 
 function usePersona(): Persona {
   const { pathname } = useLocation();
@@ -79,9 +88,7 @@ function DirectorNavigation() {
   return (
     <>
       <AppNavHeader />
-      <NavLink label="Boards" as="span" style={{ marginTop: "12px" }}>
-        <ExpandLeftIcon slot="icon" />
-      </NavLink>
+      <BoardsNavLink />
       <RoutedNavLink to="/director" end label="Home">
         <HomeIcon slot="icon" />
       </RoutedNavLink>
@@ -106,13 +113,27 @@ function DirectorNavigation() {
   );
 }
 
+function ApplicationManagementSection() {
+  const { pathname } = useLocation();
+  const isOrgSettings = pathname.startsWith("/admin/settings");
+
+  return (
+    <NavSection label="Application management" expandStart isOpen>
+      <OrganizationIcon slot="icon" />
+      <NavLink label="Users" as="span" />
+      <NavLink label="Committees" as="span" />
+      <RouterNavLink to="/admin/settings">
+        <NavLink as="span" label="Organization settings" isCurrent={isOrgSettings} />
+      </RouterNavLink>
+    </NavSection>
+  );
+}
+
 function AdminNavigation() {
   return (
     <>
       <AppNavHeader />
-      <NavLink label="Boards" as="span" style={{ marginTop: "12px" }}>
-        <ExpandLeftIcon slot="icon" />
-      </NavLink>
+      <BoardsNavLink />
       <AdminBooksNavLink />
       <RoutedNavLink to="/admin/resource-center" label="Resource Center">
         <ResourceCenterIcon slot="icon" />
@@ -130,6 +151,7 @@ function AdminNavigation() {
       <NavLink label="Boards account" as="span">
         <UserManagementIcon slot="icon" />
       </NavLink>
+      <ApplicationManagementSection />
     </>
   );
 }

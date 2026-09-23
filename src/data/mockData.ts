@@ -9,11 +9,6 @@ export interface Book {
   pages: number;
 }
 
-export interface SuggestionCard {
-  category: string;
-  prompt: string;
-}
-
 export interface Source {
   index: number;
   title: string;
@@ -83,46 +78,6 @@ export const books: Book[] = [
     status: "Archived",
     documentCount: 12,
     pages: 164,
-  },
-];
-
-// ─── Suggestion cards ─────────────────────────────────────────────────────────
-
-export const suggestionCards: SuggestionCard[] = [
-  {
-    category: "Find past materials",
-    prompt: '"Find materials related to [topic] from last year."',
-  },
-  {
-    category: "Trace decisions",
-    prompt: '"When was [initiative / policy] formally approved?"',
-  },
-  {
-    category: "Answer questions",
-    prompt: '"Has the board previously discussed [topic]?"',
-  },
-  {
-    category: "Onboard director",
-    prompt: '"Find induction materials and recent board context."',
-  },
-];
-
-export const directorSuggestionCards: SuggestionCard[] = [
-  {
-    category: "Prepare for my meeting",
-    prompt: '"What should I review before [committee] based on last meeting\'s follow-ups?"',
-  },
-  {
-    category: "Monitor trends",
-    prompt: '"How has [risk / metric / topic] changed across the last [X] board cycles?"',
-  },
-  {
-    category: "Find a past decision",
-    prompt: '"When did the board approve [policy], and what was resolved?"',
-  },
-  {
-    category: "Summarize decisions",
-    prompt: '"Summarize key board decisions and highlights from the past year."',
   },
 ];
 
@@ -596,6 +551,220 @@ export const smartRiskEmptyCategories: SmartRiskCategory[] = SMART_RISK_CATEGORI
 export const SMART_RISK_DISCLAIMER =
   "The Smart Risk Scanner is not intended to act as or replace legal advice and does not create an attorney-client relationship. Please engage qualified counsel to obtain appropriate legal advice.";
 
+// ─── Audit Smart Prep ────────────────────────────────────────────────────────
+
+export interface AuditFigure {
+  value: string;
+  description: string;
+  citation: string;
+  citationIndex?: number;
+}
+
+export interface AuditTriageMatter {
+  number: number;
+  title: string;
+  triageLine: string;
+  framingSentence: string;
+  suggestedQuestions: string[];
+  figures: AuditFigure[];
+  toResolve: string[];
+}
+
+export interface AuditBrief {
+  title: string;
+  openingRead: string;
+  severityCounts: {
+    critical: number;
+    high: number;
+    moderate: number;
+  };
+  triageMatters: AuditTriageMatter[];
+  lowerPriority: string[];
+}
+
+export const auditBrief: AuditBrief = {
+  title: "NVIDIA Corporation — FY2025 · audit committee preparation",
+  openingRead:
+    "The pack is comprehensive and the underlying performance exceptional, but three matters stand out ahead of the auditor ratification and charter amendment votes: a $3.7 billion inventory provision with $30.8 billion in non-cancellable purchase commitments that were not pre-reviewed by the committee despite representing 24% of year-end revenue; a critical audit matter flagged by PwC on inventory valuation judgment that deserves committee walk-through given the magnitude and the transition risk embedded in simultaneous Blackwell ramp and Hopper wind-down; and fee increases to PwC of 11% year-over-year without documented committee discussion of scope changes or engagement efficiency. Three lower-priority items relate to director independence, equity dilution, and tax reserve disclosures. (0 critical · 3 high · 3 moderate)",
+  severityCounts: {
+    critical: 0,
+    high: 3,
+    moderate: 3,
+  },
+  triageMatters: [
+    {
+      number: 1,
+      title: "Inventory provisions and purchase commitments",
+      triageLine:
+        "Inventory provisions of $3.7 billion and outstanding purchase obligations of $30.8 billion — both record levels — were not presented to the committee for review during the year despite representing material commitments and judgment-heavy exposures.",
+      framingSentence:
+        "Net inventory provisions of $3.0 billion ($3.7 billion gross, less $0.7 billion releases from prior reserves) and $30.8 billion in non-cancellable purchase obligations — predominantly for Blackwell architecture — represent material exposures that do not appear to have been reviewed by the Audit Committee during the year.",
+      suggestedQuestions: [
+        "What portions of the $30.8 billion in purchase commitments were committed during FY2025, and at what points in the year did management brief the committee on the quantum and the demand assumptions underpinning them?",
+        "The $3.7 billion provision includes a second-quarter charge for low-yielding Blackwell material; what was the magnitude of that charge, and what analysis supported the conclusion that the remainder of Blackwell inventory and commitments required no further provision at year-end?",
+        "Walk us through the inventory transition plan: we are ramping Blackwell while still shipping Hopper simultaneously, with lead times exceeding twelve months — how are demand forecasts calibrated to avoid the mismatch risk management flags as having \"significantly harmed financial results\" in the past?",
+      ],
+      figures: [
+        {
+          value: "$30.8 billion",
+          description:
+            "outstanding inventory purchase and long-term supply obligations, increase led by Blackwell commitments",
+          citation: "(Financial Statement Notes Summary, Part 4d)",
+          citationIndex: 1,
+        },
+        {
+          value: "$3.7 billion",
+          description: "total inventory provisions and excess purchase obligations recorded in FY2025",
+          citation: "(Fiscal Year 2025 Performance, Part 4c)",
+          citationIndex: 2,
+        },
+        {
+          value: "$689 million",
+          description: "provision releases from sales of previously reserved inventory",
+          citation: "(Fiscal Year 2025 Performance, Part 4c)",
+          citationIndex: 2,
+        },
+        {
+          value: "$10.1 billion",
+          description: "consolidated inventories at January 26, 2025",
+          citation: "(Audit Report Overview, Part 4d)",
+          citationIndex: 3,
+        },
+        {
+          value: "$1.6 billion",
+          description: "inventory provision recorded in cost of revenue for FY2025",
+          citation: "(Financial Statement Notes Summary, Part 4d)",
+          citationIndex: 1,
+        },
+        {
+          value: "12+ months",
+          description: "manufacturing lead times",
+          citation: "(Corporate Overview and Strategy, Part 4c)",
+          citationIndex: 4,
+        },
+      ],
+      toResolve: [
+        "Request the committee papers from FY2025 meetings showing when and how the $30.8 billion commitment level was authorized, and the demand sensitivities presented at the time.",
+        "Get the detailed roll-forward of inventory provisions by product line, including the Q2 Blackwell charge, the reserve releases by quarter, and the year-end coverage analysis by architecture and segment.",
+        "Pull management's year-end demand forecast for Blackwell and Hopper by quarter through FY2026, and reconcile it to the committed supply to show the committee where the exposure sits if demand softens.",
+      ],
+    },
+    {
+      number: 2,
+      title: "Critical audit matter on inventory valuation",
+      triageLine:
+        "PwC identified inventory valuation as the sole critical audit matter, citing significant judgment in demand forecasting and product transitions; the committee has not yet received PwC's testing results or the assumptions they validated.",
+      framingSentence:
+        "PwC identified inventory valuation as the sole critical audit matter in its FY2025 report, citing the significant judgment required in forecasting demand and market conditions given $10.1 billion in inventory and $30.8 billion in outstanding obligations.",
+      suggestedQuestions: [
+        "What specific assumptions did PwC test in its inventory valuation procedures, and did the firm flag any assumptions as aggressive or outside the range it considered supportable?",
+        "The audit report states testing focused on management's assumptions regarding future demand and market conditions; what documentation did management provide, and how did PwC assess it against historical product life cycles and external market data?",
+        "Given that inventory was the only critical audit matter this year, should the committee expect a deeper interim review of inventory and commitments during FY2026, and if so at what cadence?",
+      ],
+      figures: [
+        {
+          value: "$10.1 billion",
+          description: "consolidated inventories as of January 26, 2025",
+          citation: "(Audit Report Overview, Part 4d)",
+          citationIndex: 3,
+        },
+        {
+          value: "$30.8 billion",
+          description: "outstanding inventory purchase and long-term supply obligations",
+          citation: "(Audit Report Overview, Part 4d)",
+          citationIndex: 3,
+        },
+        {
+          value: "1",
+          description: "number of critical audit matters identified by PwC",
+          citation: "(Audit Report Overview, Part 4d)",
+          citationIndex: 3,
+        },
+        {
+          value: "$3.7 billion",
+          description: "inventory provisions and excess obligations recorded",
+          citation: "(Fiscal Year 2025 Performance, Part 4c)",
+          citationIndex: 2,
+        },
+      ],
+      toResolve: [
+        "Request PwC's report to the Audit Committee on the critical audit matter, including the testing procedures performed, the assumptions evaluated, and any differences between management's initial position and the conclusion PwC accepted.",
+        "Get management's written demand forecast and market-condition analysis that supported the year-end inventory valuation, and confirm it matches what PwC tested.",
+        "Ask PwC whether the firm recommends more frequent committee review given the faster product cadence.",
+      ],
+    },
+    {
+      number: 3,
+      title: "Auditor fees and scope",
+      triageLine:
+        "Audit fees rose 21% to $8.1 million while total fees increased 11% to $10.0 million, with no documented committee discussion of scope changes, engagement hours, or fee benchmarking against the peer group.",
+      framingSentence:
+        "Total fees paid to PwC increased 11% year-over-year to $10.0 million, with audit fees rising 21% to $8.1 million, yet the proxy materials contain no committee discussion of scope changes, engagement efficiency, or fee benchmarking.",
+      suggestedQuestions: [
+        "What drove the 21% increase in audit fees from $6.7 million to $8.1 million — additional hours, rate increases, expanded scope, or a combination, and how does the per-hour rate compare to the prior year?",
+        "The committee pre-approved non-audit services totaling $1.9 million as compatible with independence; what is the nature of those services, and has the committee reviewed the total fee relationship against SEC and PCAOB independence guidance?",
+        "PwC has served as auditor since 2004; what is the committee's process for evaluating auditor performance and considering a tender, and when was the last formal evaluation?",
+      ],
+      figures: [
+        {
+          value: "$10,002,351",
+          description: "total fees paid to PwC for FY2025",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+        {
+          value: "$9,007,069",
+          description: "total fees paid to PwC for FY2024",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+        {
+          value: "$8,067,106",
+          description: "audit fees for FY2025",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+        {
+          value: "$6,686,412",
+          description: "audit fees for FY2024",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+        {
+          value: "$1,935,245",
+          description: "non-audit services for FY2025",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+        {
+          value: "2004",
+          description: "year PwC engagement commenced",
+          citation: "(Auditor Ratification Proposal, Part 4b)",
+          citationIndex: 5,
+        },
+      ],
+      toResolve: [
+        "Request the fee proposal or engagement letter from PwC for FY2025 showing scope, estimated hours, and hourly rates, and reconcile actual fees to the estimate.",
+        "Get the committee's independence analysis for FY2025, including the breakdown of non-audit services by category and the assessment against the fee-cap ratios under SEC rules.",
+        "Ask management whether the committee has benchmarked PwC's fees against peer-company audit fees adjusted for revenue and complexity, and if not, request that analysis for the next meeting.",
+      ],
+    },
+  ],
+  lowerPriority: [
+    "Stephen C. Neal serves as Lead Director and as Chairman Emeritus of Cooley LLP, NVIDIA's general legal counsel; the pack does not describe how the board concluded this relationship does not impair independence under Nasdaq standards (Director Election Proposal Overview, Part 4b).",
+    "Outstanding equity awards of 274 million RSUs and PSUs, plus 3.6 billion shares available for future grants, represent 15% of shares outstanding; the committee has not reviewed dilution trends or burn rate against the peer group (Equity Compensation Overview, Part 4b).",
+    "Unrecognized tax benefits increased 71% to $2.9 billion, yet the pack states only that timing remains uncertain due to \"underlying tax position complexities\" without describing the positions or jurisdictions at risk (Financial Statement Notes Summary, Part 4d; Financial Risk and Controls, Part 4c).",
+  ],
+};
+
+export const auditBriefSources: Source[] = [
+  { index: 1, title: "Financial Statement Notes Summary", page: "Part 4d" },
+  { index: 2, title: "Fiscal Year 2025 Performance", page: "Part 4c" },
+  { index: 3, title: "Audit Report Overview", page: "Part 4d" },
+  { index: 4, title: "Corporate Overview and Strategy", page: "Part 4c" },
+  { index: 5, title: "Auditor Ratification Proposal", page: "Part 4b" },
+];
+
 // ─── Admin book structure (Build book tab) ───────────────────────────────────
 
 export type ApprovalStatus = "approved" | "not_approved" | "none";
@@ -740,7 +909,7 @@ export const adminBooks: AdminBook[] = [
   },
   {
     id: "4",
-    title: "ESG & Sustainability Steering — Q3 2026",
+    title: "ESG & Sustainability Report — Q3 2026",
     dateRange: "Jul 8–10, 2026",
     meetingDate: "07/08/2026",
     labels: ["ESG", "Sustainability"],
@@ -771,7 +940,7 @@ export const adminBooks: AdminBook[] = [
   },
   {
     id: "6",
-    title: "Compensation & Talent Committee — Mar 2026",
+    title: "Compensation & Talent Review — Q1 2026",
     dateRange: "Mar 22–23, 2026",
     meetingDate: "03/22/2026",
     labels: ["Talent", "Compensation"],

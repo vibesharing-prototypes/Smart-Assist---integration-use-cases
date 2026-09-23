@@ -1,11 +1,13 @@
 import { AppLayout } from "@diligentcorp/atlas-react-bundle";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 import { useEffect, useRef } from "react";
+import { useTheme } from "@mui/material";
 import "./styles.css";
 
 import Navigation from "./Navigation.js";
 import ViewSwitcherButton from "./components/ViewSwitcherButton.js";
 import SettingsPage from "./pages/SettingsPage.js";
+import OrganizationSettingsPage from "./pages/OrganizationSettingsPage.js";
 import SimplePage from "./pages/SimplePage.js";
 import AIAssistantPage from "./pages/AIAssistantPage.js";
 import AdminBooksPage from "./pages/AdminBooksPage.js";
@@ -297,6 +299,71 @@ function useOverrideOrgSwitcher(orgName: string) {
   }, [orgName]);
 }
 
+// ─── Org-switcher dropdown affordances ────────────────────────────────────────
+// The org-switcher (logo + branch label) opens a branch dropdown, so signal that
+// it's interactive: a trailing down-chevron and a hover background. Both target
+// the Lit-rendered <button> inside the org-switcher's shadow DOM, which re-renders
+// when the branch label changes (useOverrideOrgSwitcher) — so a MutationObserver
+// re-applies them whenever they go missing. The hover fill uses the Atlas
+// tertiary/secondary hover token (gray-100), the cursor is forced to pointer
+// (the button carries a `disabled` attribute), and both must be injected into the
+// switcher's own shadow root since `background-color` doesn't inherit across it.
+
+function useOrgSwitcherAffordances() {
+  // Atlas tertiary-hover fill (gray-100). Read from the JS theme — the installed
+  // bundle doesn't expose the Atlas tokens as global CSS variables, so we inject
+  // the resolved value into the shadow-root style rather than a var().
+  const hoverFill = useTheme().tokens.semantic.color.surface.variant.value;
+
+  useEffect(() => {
+    const CHEVRON_ID = "branch-switcher-chevron";
+    const STYLE_ID = "branch-switcher-style";
+    const CHEVRON_SVG = `<svg id="${CHEVRON_ID}" width="20" height="20" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="flex:0 0 auto;margin-left:2px;opacity:0.7;vertical-align:middle;"><path d="M9.99935 12.9743L5.01935 7.99425L5.96202 7.05225L9.99935 11.0903L14.0367 7.05225L14.9793 7.99425L9.99935 12.9743Z"/></svg>`;
+    const STYLE_CSS = `
+      button { cursor: pointer !important; transition: background-color 120ms ease; }
+      button:hover { background-color: ${hoverFill} !important; }
+    `;
+
+    let observer: MutationObserver | null = null;
+
+    const ensure = (root: ShadowRoot) => {
+      if (!root.getElementById(STYLE_ID)) {
+        const style = document.createElement("style");
+        style.id = STYLE_ID;
+        style.textContent = STYLE_CSS;
+        root.appendChild(style);
+      }
+      const btn = root.querySelector("button");
+      if (btn && !btn.querySelector(`#${CHEVRON_ID}`)) {
+        btn.insertAdjacentHTML("beforeend", CHEVRON_SVG);
+      }
+    };
+
+    const trySet = () => {
+      const mockNav = document.querySelector("mock-hb-global-navigator");
+      const navRoot = (mockNav as Element & { shadowRoot: ShadowRoot | null })?.shadowRoot;
+      const org = navRoot?.querySelector("atlas-gn-org-switcher") as
+        | (Element & { shadowRoot: ShadowRoot | null })
+        | null;
+      const root = org?.shadowRoot;
+      if (!root) return false;
+      ensure(root);
+      observer = new MutationObserver(() => ensure(root));
+      observer.observe(root, { childList: true, subtree: true });
+      return true;
+    };
+
+    if (trySet()) return () => observer?.disconnect();
+    const id = setInterval(() => {
+      if (trySet()) clearInterval(id);
+    }, 100);
+    return () => {
+      clearInterval(id);
+      observer?.disconnect();
+    };
+  }, [hoverFill]);
+}
+
 // ─── Hide app switcher from the global nav header ─────────────────────────────
 
 function useHideAppSwitcher() {
@@ -452,31 +519,29 @@ function ViewSwitcherForRoute() {
   return null;
 }
 
-// Smart Assist Insights are book-scoped: the docked panel / overlay only makes
-// sense inside a book reader. When the user navigates out of a book reader to
-// any other page, close the panel and overlay so they don't linger with stale
-// book content. Navigating between two book readers keeps it open.
+// Leaving a book reader keeps the docked Smart Assist panel open — it carries
+// over to the next page (books list, resource center, …) rather than being
+// force-closed. Only the full-screen overlay is dismissed on exit, since a
+// full-screen takeover lingering over a different page would be jarring.
 const isBookReaderRoute = (path: string) =>
   /^\/(?:director\/|admin\/)?books\/[^/]+/.test(path);
 
 function SmartAssistRouteSync() {
   const { pathname } = useLocation();
-  const { closePanel, closeOverlay } = useSmartAssist();
+  const { closeOverlay } = useSmartAssist();
   const prevPathRef = useRef(pathname);
 
   useEffect(() => {
     const left = isBookReaderRoute(prevPathRef.current) && !isBookReaderRoute(pathname);
     prevPathRef.current = pathname;
-    if (left) {
-      closePanel();
-      closeOverlay();
-    }
-  }, [pathname, closePanel, closeOverlay]);
+    if (left) closeOverlay();
+  }, [pathname, closeOverlay]);
 
   return null;
 }
 
 function AppShell() {
+  const orgLabel = "ACME Corp";
   usePanelMode();
   useNavContainerFullHeight();
   useDisableHeaderMenuClicks();
@@ -486,10 +551,11 @@ function AppShell() {
   useHidePlatformNavItems();
   useCollapsedNavStyle();
   useNavFontFamilyInter();
-  useOverrideOrgSwitcher("ACME Ltd.");
+  useOverrideOrgSwitcher(orgLabel);
+  useOrgSwitcherAffordances();
   useTopBarTrailingCustomization();
   return (
-    <AppLayout navigation={<Navigation />} orgName="ACME Ltd.">
+    <AppLayout navigation={<Navigation />} orgName={orgLabel}>
       <CitationPreviewProvider>
         <SmartAssistProvider>
           <SmartAssistRouteSync />
@@ -504,12 +570,14 @@ function AppShell() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<AppShell />}>
-        <Route index element={<Navigate to="/admin/books" replace />} />
+      <Route path="/" element={<Navigate to="/director" replace />} />
+      {/* Everything below renders inside the app shell (header + side nav) */}
+      <Route element={<AppShell />}>
         <Route path="director" element={<DirectorHomePage />} />
         <Route path="director/books" element={<DirectorBooksPage />} />
         <Route path="director/books/:id" element={<DirectorBookReaderPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="admin/settings" element={<OrganizationSettingsPage />} />
         <Route path="simple" element={<SimplePage />} />
         <Route path="ai-assistant" element={<AIAssistantPage />} />
         <Route path="resource-center" element={<ResourceCenterPage />} />

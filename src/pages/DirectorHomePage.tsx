@@ -5,7 +5,7 @@ import { SectionHeader } from "@diligentcorp/atlas-react-bundle";
 import { AiBadge, AiInaccuracyDisclaimer } from "../components/AiDisclaimers.js";
 import BookMoreMenu from "../components/BookMoreMenu.js";
 import { BookStateIcon } from "../components/BookStateIcons.js";
-import SmartAssistWidget from "../components/SmartAssistWidget.js";
+import DirectorHomeSearch from "../components/DirectorHomeSearch.js";
 import MaxWidthBody from "../components/MaxWidthBody.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
@@ -14,6 +14,7 @@ import { directorHomeBooks, type AdminBook } from "../data/mockData.js";
 import {
   Box,
   Button,
+  Collapse,
   IconButton,
   Stack,
   Tab,
@@ -58,6 +59,18 @@ const textSx = (t: FontToken, weight?: number) => ({
 // "Published"`, so unpublished and archived books never appear here.
 
 const INITIAL_BOOKS_VISIBLE = 4;
+
+// One shared timeline so the hero, the panel slide, and the content reflow all
+// move together as a single cohesive motion (300ms, matching the panel's own
+// transition in SmartAssistSidenav). The hero is counter-translated to stay
+// horizontally fixed (pure up/down) and fades as it collapses so the brief edge
+// clip against the incoming panel is never visible.
+const HERO_ANIM_MS = 300;
+const HERO_EASE = "cubic-bezier(0.2, 0, 0, 1)";
+// Half the docked-panel footprint (DRAWER_WIDTH + 24 = 464px). The centered hero
+// would drift left by this much as the column shrinks; translating it right by
+// the same amount, on the same timeline, cancels the drift frame-for-frame.
+const HERO_COUNTER_SHIFT = 232;
 
 type CompetitorUpdate = {
   title: string;
@@ -829,7 +842,7 @@ export default function DirectorHomePage() {
     setActiveTab(1);
     setSelectedInsight(insight);
     openPanel();
-    navigate(`/director/books/${id}`);
+    navigate(`/director/books/${id}`, { state: { from: "/director" } });
   };
 
   return (
@@ -841,7 +854,11 @@ export default function DirectorHomePage() {
         flex: 1,
         minWidth: 0,
         height: "100%",
-        overflow: "auto",
+        // overflowX hidden so the hero's counter-translate (briefly shifted
+        // toward the panel to stay horizontally fixed) can't spawn a transient
+        // horizontal scrollbar mid-animation.
+        overflowX: "hidden",
+        overflowY: "auto",
         background:
           "radial-gradient(125.08% 101.36% at 0% 0%, var(--lens-semantic-color-background-base-gradient-start, #f9f9fc) 30.53%, var(--lens-semantic-color-background-base-gradient-end, #fcfcff) 100%)",
       }}
@@ -967,29 +984,52 @@ export default function DirectorHomePage() {
               gap: spacing["3"].value /* content/gutter = 24 */,
               pl: spacing["4"].value /* content/margin = 32 */,
               pr: panelOpen ? "12px" : spacing["4"].value /* content/margin = 32 */,
-              pt: spacing["2"].value /* page-header-to-content = 16 */,
+              pt: "24px" /* chat box sits 24px below the tabs */,
               pb: spacing["4"].value,
               alignItems: "flex-start",
               transition: "padding-right 0.3s ease",
             }}
           >
-            {/* Left column — fluid */}
+            {/* Left column — fluid. Holds the Smart Assist composer hero and the
+                Books section; the Competitor rail sits beside the whole column. */}
             <Stack
               sx={{
                 flex: 1,
                 minWidth: 0,
                 gap: spacing["2"].value,
-                pt: spacing["1_5"].value,
               }}
             >
+              {/* Home search hero — Smart Assist composer (Overview only). Scrolls
+                  with the page (not sticky). Everything animates on one shared
+                  300ms timeline so the hero, the panel slide and the content
+                  reflow read as a single cohesive motion. The wrapper fades the
+                  hero as the panel docks; the inner Collapse provides the slide.
+                  +8px bottom margin puts it 24px above the Books header against
+                  the 16px Stack gap. */}
+              <Box
+                sx={{
+                  mb: "8px",
+                  transition: `transform ${HERO_ANIM_MS}ms ${HERO_EASE}, opacity ${HERO_ANIM_MS}ms ${HERO_EASE}`,
+                  willChange: "transform, opacity",
+                }}
+                style={{
+                  transform: panelOpen ? `translateX(${HERO_COUNTER_SHIFT}px)` : "translateX(0px)",
+                  opacity: panelOpen ? 0 : 1,
+                }}
+              >
+                <Collapse in={!panelOpen} timeout={HERO_ANIM_MS} easing={HERO_EASE}>
+                  <DirectorHomeSearch />
+                </Collapse>
+              </Box>
+
               <SectionHeader
                 title="Books"
                 subtitle="Board materials, ordered by meeting date."
-                headingLevel="h3"
-                slotProps={{ title: { sx: { fontWeight: 600 } } }}
+                headingLevel="h4"
+                slotProps={{ title: { sx: { fontWeight: 600, fontSize: "18px" } } }}
               />
               <BooksGrid
-                onOpenBook={(id) => navigate(`/director/books/${id}`)}
+                onOpenBook={(id) => navigate(`/director/books/${id}`, { state: { from: "/director" } })}
                 onOpenInsight={openInsightInBook}
               />
             </Stack>
@@ -999,16 +1039,7 @@ export default function DirectorHomePage() {
                 takes the inline space without crowding the page. */}
             {!panelOpen && (
               <Box sx={{ width: "clamp(343px, 28%, 380px)", flexShrink: 0 }}>
-                <Stack sx={{ gap: "24px" }}>
-                  <SmartAssistWidget />
-                  <Box
-                    sx={{
-                      height: "1px",
-                      backgroundColor: color.ui.divider.default.value,
-                    }}
-                  />
-                  <CompetitorUpdatesCard />
-                </Stack>
+                <CompetitorUpdatesCard />
               </Box>
             )}
           </Box>

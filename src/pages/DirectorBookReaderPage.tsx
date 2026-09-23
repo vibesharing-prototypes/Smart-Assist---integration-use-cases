@@ -442,7 +442,8 @@ export default function DirectorBookReaderPage() {
   // location.state. Those legacy books have no assembled-page set of their own,
   // so the reader renders the cited document's own pages instead of the generic
   // boardroom mock — that's how single-document citations open "in the book".
-  const navState = location.state as { documentId?: string; documentPage?: number } | null;
+  const navState = location.state as { documentId?: string; documentPage?: number; from?: string } | null;
+  const backDestRef = useRef<string>(navState?.from ?? "/director");
   const stateDoc =
     !isQ2BoardPackage && navState?.documentId && navState.documentId in DOCUMENTS
       ? DOCUMENTS[navState.documentId as DocumentId]
@@ -532,7 +533,8 @@ export default function DirectorBookReaderPage() {
 
   // Citation preview behavior inside the book reader:
   //  • Panel mode + citation into *this* book → scroll the book to the cited
-  //    page in place (no right-side doc preview).
+  //    page in place (no right-side doc preview). Applies to both "insight"
+  //    and "chat" contexts so clicking chat response chips also scrolls.
   //  • Panel mode + citation into a *different* book → can't be shown in place,
   //    so expand to the full-screen overlay and show it in the side preview.
   //  • Overlay mode → stay in full screen; the overlay's CitationPreviewPanel
@@ -544,7 +546,8 @@ export default function DirectorBookReaderPage() {
   expandRef.current = expandToOverlay;
   useEffect(() => {
     if (!previewSource) return;
-    if (previewContext === "insight" && !overlayOpenRef.current) {
+    const isPanelContext = previewContext === "insight" || previewContext === "chat";
+    if (isPanelContext && !overlayOpenRef.current) {
       // Home book of the cited document — only same-book citations can be
       // shown by scrolling the currently open book.
       const citedBookId = previewSource.documentId
@@ -601,7 +604,7 @@ export default function DirectorBookReaderPage() {
       >
         <IconButton
           aria-label="Back"
-          onClick={() => navigate(-1)}
+          onClick={() => navigate(backDestRef.current)}
           sx={{ p: "4px", borderRadius: "8px", color: color.action.secondary.onSecondary.value }}
         >
           <ArrowLeftIcon size="lg" />

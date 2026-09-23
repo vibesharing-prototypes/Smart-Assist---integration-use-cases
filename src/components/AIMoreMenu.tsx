@@ -2,20 +2,18 @@ import { Menu, MenuItem, Stack, Typography, useTheme } from "@mui/material";
 
 import GiveFeedbackIcon from "@diligentcorp/atlas-react-bundle/icons/GiveFeedback";
 import InfoIcon from "@diligentcorp/atlas-react-bundle/icons/Info";
-import ProfileIcon from "@diligentcorp/atlas-react-bundle/icons/Profile";
+import ExternalLinkIcon from "@diligentcorp/atlas-react-bundle/icons/ExternalLink";
 
 interface AIMoreMenuProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
-  onPersonalizationClick: () => void;
 }
 
-export default function AIMoreMenu({ anchorEl, onClose, onPersonalizationClick }: AIMoreMenuProps) {
+export default function AIMoreMenu({ anchorEl, onClose }: AIMoreMenuProps) {
   const { tokens: { semantic: { color } } } = useTheme();
 
   const items = [
-    { Icon: ProfileIcon, label: "Personalization", onClick: () => { onClose(); onPersonalizationClick(); } },
-    { Icon: InfoIcon, label: "Learn about data privacy", onClick: onClose },
+    { Icon: InfoIcon, label: "Learn more about data policy", onClick: onClose, TrailingIcon: ExternalLinkIcon, href: "https://help.highbond.com/helpdocs/highbond/en-us/Default.htm#cshid=brds-ai-faq" },
     { Icon: GiveFeedbackIcon, label: "Give feedback", onClick: onClose },
   ];
 
@@ -39,10 +37,11 @@ export default function AIMoreMenu({ anchorEl, onClose, onPersonalizationClick }
         },
       }}
     >
-      {items.map(({ Icon, label, onClick }) => (
+      {items.map(({ Icon, label, onClick, TrailingIcon, href }) => (
         <MenuItem
           key={label}
           onClick={onClick}
+          {...(href ? { component: "a", href, target: "_blank", rel: "noopener noreferrer" } : {})}
           sx={{
             px: "16px",
             py: "12px",
@@ -55,6 +54,7 @@ export default function AIMoreMenu({ anchorEl, onClose, onPersonalizationClick }
             <Typography sx={{ fontSize: "14px", lineHeight: "20px", color: color.type.default.value }}>
               {label}
             </Typography>
+            {TrailingIcon && <TrailingIcon size="md" style={{ color: color.type.muted.value }} />}
           </Stack>
         </MenuItem>
       ))}

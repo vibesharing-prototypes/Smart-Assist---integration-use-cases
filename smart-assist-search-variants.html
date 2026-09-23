@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Assist — Search Variants</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #F4F5F7;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .panel {
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06);
+      width: 100%;
+      max-width: 560px;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #EBEBEB;
+    }
+
+    .panel-header-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: #3B2FC9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .panel-header-icon svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
+    .panel-header-text {
+      flex: 1;
+    }
+
+    .panel-header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1A1A2E;
+      line-height: 1.3;
+    }
+
+    .panel-header-subtitle {
+      font-size: 11px;
+      color: #6B7280;
+      margin-top: 1px;
+    }
+
+    /* Context badge */
+    .context-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #F3F0FF;
+      border: 1px solid #C4B8F8;
+      border-radius: 20px;
+      padding: 3px 10px 3px 7px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: #3B2FC9;
+      margin: 14px 20px 0;
+    }
+
+    .context-badge svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    /* Response area */
+    .response-area {
+      min-height: 160px;
+      padding: 16px 20px;
+    }
+
+    .response-empty {
+      color: #9CA3AF;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* Thinking state */
+    .thinking {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #6B7280;
+      font-size: 13px;
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .thinking-dots span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #3B2FC9;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.2; transform: scale(0.9); }
+      40%            { opacity: 1;   transform: scale(1); }
+    }
+
+    /* Answer */
+    .answer {
+      font-size: 13.5px;
+      line-height: 1.65;
+      color: #1A1A2E;
+      white-space: pre-wrap;
+    }
+
+    .answer sup {
+      font-size: 10px;
+      color: #3B2FC9;
+      font-weight: 600;
+      cursor: default;
+    }
+
+    /* Reset button */
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 14px;
+      font-size: 12px;
+      color: #6B7280;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+    }
+
+    .reset-btn:hover { color: #3B2FC9; }
+
+    /* Composer */
+    .composer {
+      padding: 12px 20px 16px;
+      border-top: 1px solid #EBEBEB;
+    }
+
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .composer-input {
+      flex: 1;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #1A1A2E;
+      background: #F9FAFB;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      padding: 9px 12px;
+      resize: none;
+      outline: none;
+      min-height: 38px;
+      max-height: 120px;
+      line-height: 1.5;
+      transition: border-color 0.15s;
+    }
+
+    .composer-input:focus { border-color: #3B2FC9; background: #fff; }
+    .composer-input::placeholder { color: #9CA3AF; }
+
+    .submit-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #3B2FC9;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .submit-btn:hover { background: #2D22A8; }
+    .submit-btn:disabled { background: #C4B8F8; cursor: default; }
+
+    .submit-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #fff;
+    }
+
+    /* Example chips */
+    .examples {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .examples-label {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-bottom: 2px;
+    }
+
+    .chip {
+      display: inline-block;
+      background: #F3F0FF;
+      border: 1px solid #C4B8F8;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11.5px;
+      color: #3B2FC9;
+      cursor: pointer;
+      transition: background 0.12s;
+      text-align: left;
+      font-family: inherit;
+      line-height: 1.4;
+      width: fit-content;
+    }
+
+    .chip:hover { background: #EBE6FF; }
+
+    /* Variant label */
+    .variant-label {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #9CA3AF;
+      font-weight: 600;
+      padding: 8px 20px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-header-icon">
+      <!-- Sparkle / AI icon -->
+      <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 1.5l1.05 3.45L12.5 6l-3.45 1.05L8 10.5 6.95 7.05 3.5 6l3.45-1.05L8 1.5z"/>
+        <path d="M12.5 10.5l.6 1.9 1.9.6-1.9.6-.6 1.9-.6-1.9-1.9-.6 1.9-.6.6-1.9z" opacity=".6"/>
+      </svg>
+    </div>
+    <div class="panel-header-text">
+      <div class="panel-header-title">Smart Assist</div>
+      <div class="panel-header-subtitle">Ask about your board materials</div>
+    </div>
+  </div>
+
+  <div class="variant-label">Variant 2 — Grounded responses</div>
+
+  <div class="context-badge">
+    <!-- Book icon -->
+    <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="1.5" width="9" height="10" rx="1" stroke="#3B2FC9" stroke-width="1.2"/>
+      <line x1="4" y1="4.5" x2="9" y2="4.5" stroke="#3B2FC9" stroke-width="1.1" stroke-linecap="round"/>
+      <line x1="4" y1="6.5" x2="9" y2="6.5" stroke="#3B2FC9" stroke-width="1.1" stroke-linecap="round"/>
+      <line x1="4" y1="8.5" x2="7" y2="8.5" stroke="#3B2FC9" stroke-width="1.1" stroke-linecap="round"/>
+    </svg>
+    Board Book Q4 2025
+  </div>
+
+  <div class="response-area" id="v2-response">
+    <div class="response-empty">Ask a question about your board materials.</div>
+  </div>
+
+  <div class="composer">
+    <div class="composer-row">
+      <textarea
+        id="v2-input"
+        class="composer-input"
+        placeholder="Ask about your board materials…"
+        rows="1"
+        onkeydown="handleKey(event)"
+        oninput="autoResize(this)"
+      ></textarea>
+      <button class="submit-btn" id="v2-submit" onclick="submitV2()" title="Send">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 2.5l5.5 11L8 11.5 2.5 13.5 8 2.5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="examples">
+      <div class="examples-label">Try these:</div>
+      <button class="chip" data-query="Summarize the board's cybersecurity discussions from 2022 to 2025." onclick="fillAndSubmit(this.dataset.query)">Summarize the board's cybersecurity discussions from 2022 to 2025.</button>
+      <button class="chip" data-query="What is the board's policy on cryptocurrency investments?" onclick="fillAndSubmit(this.dataset.query)">What is the board's policy on cryptocurrency investments?</button>
+      <button class="chip" data-query="What is the board's regulatory filing deadline for the annual report?" onclick="fillAndSubmit(this.dataset.query)">What is the board's regulatory filing deadline for the annual report?</button>
+      <button class="chip" data-query="Draft a marketing email announcing our new product launch." onclick="fillAndSubmit(this.dataset.query)">Draft a marketing email announcing our new product launch.</button>
+      <button class="chip" data-query="What is EBITDA?" onclick="fillAndSubmit(this.dataset.query)">What is EBITDA?</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── Response map ────────────────────────────────────────────────────────────
+
+  const RESPONSES = {
+    "summarize the board's cybersecurity discussions from 2022 to 2025":
+`I found cybersecurity discussions from Q2 2023 onward, but nothing from 2022 in your board materials. The summary below covers 2023 to 2025.
+
+The board first recorded cybersecurity as a standing risk item in the Q2 2023 Risk Committee report, after a third-party penetration test. [1] Through 2024, discussion focused on vendor access controls and the rollout of multi-factor authentication across board systems. [2] The most recent update, in the Q1 2025 Audit Committee minutes, noted that all high-severity findings from the 2024 review were remediated. [3]
+
+Sources: Risk Committee Report — Q2 2023; Board Minutes — November 2024; Audit Committee Minutes — Q1 2025
+
+AI-generated content may have inaccuracies.`,
+
+    "what is the board's policy on cryptocurrency investments":
+`I couldn't find information about cryptocurrency investments in your board materials. To refine your search, narrow it to a specific book or time period, or rephrase your question.`,
+
+    "what is the board's regulatory filing deadline for the annual report":
+`Your materials give two different dates for the annual report filing deadline, and I can't determine which is current:
+- The March 2025 board minutes record the deadline as 30 April 2025. [1]
+- The Q2 2025 Governance Committee pack lists it as 15 May 2025. [2]
+
+This touches a statutory filing. To confirm the binding date, check with your board secretary.
+
+Sources: Board Minutes — March 2025; Governance Committee Pack — Q2 2025
+
+AI-generated content may have inaccuracies.`,
+
+    "draft a marketing email announcing our new product launch":
+`Smart Assist is built for governance work — your board materials, committee decisions, regulatory context, and meeting preparation. Drafting product marketing sits outside that. If you're preparing board communications about the launch, I can help you find what your materials say about it.`,
+
+    "what is ebitda":
+`EBITDA is earnings before interest, taxes, depreciation, and amortization — a measure of operating profitability before those items are deducted.
+
+General knowledge — not from your board materials.
+
+Want me to search your materials for how EBITDA appears in your board's financial reporting?`,
+  };
+
+  // ─── Normalise query ─────────────────────────────────────────────────────────
+
+  function normalise(text) {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/[‘’]/g, "'")  // curly apostrophes → straight
+      .replace(/\s+/g, ' ')
+      .replace(/[?.]+$/, '');
+  }
+
+  // ─── Submit ──────────────────────────────────────────────────────────────────
+
+  function submitV2() {
+    const input = document.getElementById('v2-input');
+    const query = input.value.trim();
+    if (!query) return;
+
+    const responseEl = document.getElementById('v2-response');
+    const submitBtn = document.getElementById('v2-submit');
+
+    // Disable while processing
+    submitBtn.disabled = true;
+    input.disabled = true;
+
+    // Show thinking state
+    responseEl.innerHTML = `
+      <div class="thinking">
+        <div class="thinking-dots">
+          <span></span><span></span><span></span>
+        </div>
+        Searching your board materials…
+      </div>
+    `;
+
+    // Resolve after short delay
+    setTimeout(() => {
+      const key = normalise(query);
+      const answer = RESPONSES[key];
+
+      if (answer) {
+        responseEl.innerHTML = `
+          <div class="answer">${escapeHtml(answer)}</div>
+          <button class="reset-btn" onclick="resetV2()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.5 6A4.5 4.5 0 1 0 6 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <polyline points="1.5,1.5 1.5,6 6,6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Clear
+          </button>
+        `;
+      } else {
+        responseEl.innerHTML = `
+          <div class="answer">I couldn't find a match for that in this demo. Try one of the example questions.</div>
+          <button class="reset-btn" onclick="resetV2()">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1.5 6A4.5 4.5 0 1 0 6 1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <polyline points="1.5,1.5 1.5,6 6,6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Clear
+          </button>
+        `;
+      }
+
+      submitBtn.disabled = false;
+      input.disabled = false;
+    }, 900);
+  }
+
+  // ─── Reset ───────────────────────────────────────────────────────────────────
+
+  function resetV2() {
+    const responseEl = document.getElementById('v2-response');
+    const input = document.getElementById('v2-input');
+    responseEl.innerHTML = '<div class="response-empty">Ask a question about your board materials.</div>';
+    input.value = '';
+    autoResize(input);
+    input.focus();
+  }
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  function fillAndSubmit(text) {
+    const input = document.getElementById('v2-input');
+    input.value = text;
+    autoResize(input);
+    submitV2();
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitV2();
+    }
+  }
+
+  function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+
+</body>
+</html>

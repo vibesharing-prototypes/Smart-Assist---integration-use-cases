@@ -10,11 +10,20 @@ import {
   useTheme,
 } from "@mui/material";
 
-import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
 import EditIcon from "@diligentcorp/atlas-react-bundle/icons/Edit";
+import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
+import PinIcon from "@diligentcorp/atlas-react-bundle/icons/Pin";
 import TrashIcon from "@diligentcorp/atlas-react-bundle/icons/Trash";
 
 import { type ChatThread } from "../data/hybrid-search.constants.js";
+
+function NewChatIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.25 13.75H12.75V10.75H15.75V9.25H12.75V6.25H11.25V9.25H8.25V10.75H11.25V13.75ZM2.5 21.0384V2.5H21.5V17.5H6.03845L2.5 21.0384ZM5.4 16H19.6923C19.7692 16 19.8397 15.9679 19.9038 15.9038C19.9679 15.8397 20 15.7692 20 15.6923V4.3077C20 4.23077 19.9679 4.16024 19.9038 4.09613C19.8397 4.03203 19.7692 3.99998 19.6923 3.99998H4.3077C4.23077 3.99998 4.16024 4.03203 4.09613 4.09613C4.03203 4.16024 3.99998 4.23077 3.99998 4.3077V17.3846L5.4 16Z" fill="currentColor"/>
+    </svg>
+  );
+}
 
 type Variant = "overlay" | "sidenav";
 
@@ -23,11 +32,14 @@ interface ChatThreadItemProps {
   isActive?: boolean;
   variant: Variant;
   onLoadThread: (thread: ChatThread) => void;
+  isPinned?: boolean;
+  onPin?: (id: string, currentlyPinned: boolean) => void;
+  onNewChat?: () => void;
 }
 
 const TEXT_DEFAULT = "rgb(36,38,40)";
 
-export default function ChatThreadItem({ thread, isActive = false, variant, onLoadThread }: ChatThreadItemProps) {
+export default function ChatThreadItem({ thread, isActive = false, variant, onLoadThread, isPinned = false, onPin, onNewChat }: ChatThreadItemProps) {
   const { tokens: { semantic: { color } } } = useTheme();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const isMenuOpen = Boolean(anchorEl);
@@ -95,10 +107,15 @@ export default function ChatThreadItem({ thread, isActive = false, variant, onLo
             width: "100%",
             boxSizing: "border-box",
             ...rowSx,
+            "& .chat-thread-action-btn": {
+              opacity: isMenuOpen ? 1 : 0,
+              backgroundColor: "transparent",
+            },
             "& .chat-thread-more-btn": {
               opacity: isMenuOpen ? 1 : 0,
               backgroundColor: isMenuOpen ? "rgba(0,0,0,0.06)" : "transparent",
             },
+            "&:hover .chat-thread-action-btn": { opacity: 1 },
             "&:hover .chat-thread-more-btn": { opacity: 1 },
           }}
         >
@@ -119,13 +136,35 @@ export default function ChatThreadItem({ thread, isActive = false, variant, onLo
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              paddingRight: "36px",
+              paddingRight: "72px",
               fontWeight: "inherit",
               color: "inherit",
             }}
           >
             {thread.title}
           </Box>
+          {onNewChat && (
+            <Tooltip title="New chat" placement="top" enterDelay={600}>
+              <IconButton
+                className="chat-thread-action-btn"
+                aria-label="New chat"
+                onClick={(e) => { e.stopPropagation(); onNewChat(); }}
+                sx={{
+                  position: "absolute",
+                  right: "40px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "6px",
+                  transition: "opacity 120ms ease",
+                  "&:hover": { backgroundColor: "rgba(0,0,0,0.06)" },
+                }}
+              >
+                <NewChatIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           <IconButton
             className="chat-thread-more-btn"
             aria-label="More options"
@@ -166,6 +205,19 @@ export default function ChatThreadItem({ thread, isActive = false, variant, onLo
           },
         }}
       >
+        {onPin && (
+          <MenuItem
+            onClick={() => { onPin(thread.id, isPinned); handleCloseMenu(); }}
+            sx={{ px: "16px", py: "12px", gap: 0, "&:hover": { backgroundColor: color.surface.variant.value } }}
+          >
+            <Stack direction="row" alignItems="center" gap="12px">
+              <PinIcon size="md" />
+              <Typography sx={{ fontSize: "14px", lineHeight: "20px", color: color.type.default.value }}>
+                {isPinned ? "Unpin" : "Pin"}
+              </Typography>
+            </Stack>
+          </MenuItem>
+        )}
         <MenuItem
           onClick={handleCloseMenu}
           sx={{ px: "16px", py: "12px", gap: 0, "&:hover": { backgroundColor: color.surface.variant.value } }}

@@ -1,7 +1,18 @@
 import { useState } from "react";
-import { Box, Button, Popover, Switch, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Chip,
+  Menu,
+  MenuItem,
+  Popover,
+  Switch,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import ConfigureIcon from "@diligentcorp/atlas-react-bundle/icons/Configure";
-import { useCitationPreview } from "../context/CitationPreviewContext.js";
+import CaretDownIcon from "@diligentcorp/atlas-react-bundle/icons/CaretDown";
+import CloseIcon from "@diligentcorp/atlas-react-bundle/icons/Close";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -11,31 +22,211 @@ export interface Source {
   enabled: boolean;
 }
 
+// Explorations branch keeps the original flat three-toggle set (rendered as
+// switches). MVP uses the scope-driven set below.
 export const INITIAL_SOURCES: Source[] = [
   { id: "current",  label: "Current books",   enabled: true },
   { id: "archived", label: "Archived books",  enabled: true },
   { id: "resource", label: "Resource center", enabled: true },
 ];
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── MVP scope model ────────────────────────────────────────────────────────────
+// Scope belongs to the CONVERSATION, not the page, and is a single choice:
+//   • This book              → only available inside a book reader
+//   • Current & Archived books (global) → everywhere else
+// A new chat defaults to where it began (inside a book → that book; otherwise
+// global). The first message pins the scope; navigating away never changes it
+// silently. The source selector is shown ONLY inside a book; if a book-scoped
+// chat is carried outside its book, the scope surfaces as a removable context
+// chip in the selector's place (clearing it switches to global).
+
+export type SourceScope = "book" | "document" | "books" | "resource" | "home";
+
+const BOOK_READER_RE = /^\/(?:director\/|admin\/)?books\/[^/]+/; // .../books/:id
+
+/** True when the path is a book reader (admin or director). */
+export function isBookReaderPath(pathname: string): boolean {
+  return BOOK_READER_RE.test(pathname);
+}
+
+/** Derive the source scope from the current route. */
+export function sourceScopeForPath(pathname: string): SourceScope {
+  if (BOOK_READER_RE.test(pathname)) return "book";
+  return "home";
+}
+
+/**
+ * The default selection for a scope. MVP carries two mutually-exclusive
+ * sources: the open book, or all current & archived books. `bookTitle` labels
+ * the book source so the dropdown and the carried-over chip name the book.
+ */
+export function mvpSourcesForScope(scope: SourceScope, bookTitle?: string): Source[] {
+  const isBook = scope === "book" || scope === "document";
+  return [
+    { id: "this-book",        label: bookTitle ?? "This book",     enabled: isBook },
+    { id: "current-archived", label: "Current & Archived books",   enabled: !isBook },
+  ];
+}
+
+// ─── Constants (explorations switch UI) ─────────────────────────────────────────
 
 const TEXT_DEFAULT  = "rgb(36,38,40)";
 const ROW_DIVIDER   = "rgba(218,218,218,1)";
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── MVP control (scope dropdown inside a book, chip outside) ────────────────────
 
-export default function SourcesFilterButton({
+export interface MvpScopeProps {
+  /** Whether the current route is a book reader. */
+  inBook: boolean;
+  /** Title of the book currently open (for the dropdown's book option). */
+  currentBookTitle: string | null;
+  /** Title of the book the conversation is scoped to (chip label); null = global. */
+  bookScopeTitle: string | null;
+  /** Whether the conversation is currently scoped to a book. */
+  isBookScope: boolean;
+  onSelectBook: () => void;
+  onSelectGlobal: () => void;
+}
+
+const GLOBAL_LABEL = "Current & Archived books";
+
+function MvpScopeControl({
+  inBook,
+  currentBookTitle,
+  bookScopeTitle,
+  isBookScope,
+  onSelectBook,
+  onSelectGlobal,
+}: MvpScopeProps) {
+  const { tokens: { semantic: { color, font } } } = useTheme();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+
+  // Outside a book: no source selector. The only affordance is a removable
+  // context chip when the conversation is pinned to a book's scope — clearing
+  // it switches the conversation to the global scope.
+  if (!inBook) {
+    if (!bookScopeTitle) return null;
+    return (
+      <Chip
+        label={bookScopeTitle}
+        size="small"
+        variant="outlined"
+        onDelete={onSelectGlobal}
+        deleteIcon={<CloseIcon size="md" aria-label="Clear book scope" />}
+        sx={{
+          height: "28px",
+          borderRadius: "8px",
+          fontSize: "14px",
+          fontWeight: 600,
+          color: color.type.default.value,
+          borderColor: color.ui.divider.default.value,
+          "& .MuiChip-deleteIcon": {
+            width: 16,
+            height: 16,
+            color: color.type.muted.value,
+            "&:hover": { color: color.type.default.value },
+          },
+        }}
+      />
+    );
+  }
+
+  const bookLabel = currentBookTitle ?? "This book";
+  const buttonLabel = isBookScope ? bookLabel : GLOBAL_LABEL;
+
+  const options = [
+    { key: "book",   label: bookLabel,    selected: isBookScope,  onClick: onSelectBook },
+    { key: "global", label: GLOBAL_LABEL, selected: !isBookScope, onClick: onSelectGlobal },
+  ];
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="text"
+        size="small"
+        endIcon={<CaretDownIcon size="md" />}
+        onClick={(e) => setAnchor(e.currentTarget as HTMLElement)}
+        sx={{
+          color: color.type.default.value,
+          fontWeight: 600,
+          "& .MuiButton-endIcon": { color: "inherit" },
+        }}
+      >
+        {buttonLabel}
+      </Button>
+
+      <Menu
+        open={Boolean(anchor)}
+        anchorEl={anchor}
+        onClose={() => setAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "left" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+        // Tokens are applied explicitly because the Menu renders in a portal
+        // that doesn't inherit the Atlas-light CSS custom properties.
+        slotProps={{
+          paper: {
+            sx: {
+              mb: "6px",
+              minWidth: 220,
+              borderRadius: "8px",
+              border: `1px solid ${color.ui.divider.default.value}`,
+              backgroundColor: color.surface.default.value,
+              boxShadow: "0 8px 16px rgba(0,0,0,0.1), 0 0 2px rgba(0,0,0,0.1)",
+            },
+          },
+        }}
+        MenuListProps={{ sx: { py: "4px" } }}
+      >
+        {options.map((opt) => (
+          <MenuItem
+            key={opt.key}
+            selected={opt.selected}
+            onClick={() => { opt.onClick(); setAnchor(null); }}
+            disableRipple
+            sx={{
+              minHeight: "auto",
+              px: "12px",
+              py: "8px",
+              backgroundColor: opt.selected ? color.selection.secondary.default.value : "transparent",
+              "&:hover": { backgroundColor: color.surface.variant.value },
+              "&.Mui-selected": { backgroundColor: color.selection.secondary.default.value },
+              "&.Mui-selected:hover": { backgroundColor: color.selection.secondary.default.value },
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: font.text.md.fontFamily.value,
+                fontSize: font.text.md.fontSize.value,
+                lineHeight: font.text.md.lineHeight.value,
+                letterSpacing: font.text.md.letterSpacing.value,
+                fontWeight: opt.selected ? 600 : 400,
+                color: color.type.default.value,
+              }}
+            >
+              {opt.label}
+            </Typography>
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
+}
+
+// ─── Explorations control (original switch UI) ──────────────────────────────────
+
+function SwitchSourcesControl({
   sources,
   onToggle,
+  allLabel = "All board materials",
 }: {
   sources: Source[];
   onToggle: (id: string) => void;
+  allLabel?: string;
 }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const allEnabled   = sources.every((s) => s.enabled);
   const enabledCount = sources.filter((s) => s.enabled).length;
-
-  const { previewSource } = useCitationPreview();
 
   return (
     <>
@@ -46,7 +237,7 @@ export default function SourcesFilterButton({
         startIcon={<ConfigureIcon />}
         onClick={(e) => setAnchor(e.currentTarget as HTMLElement)}
       >
-        {allEnabled ? "All board materials" : "Selected sources"}
+        {allEnabled ? allLabel : "Selected sources"}
       </Button>
 
       <Popover
@@ -133,41 +324,20 @@ export default function SourcesFilterButton({
             </Box>
           );
         })}
-
-        {/* "Book or document in preview" — only shown when a citation is open */}
-        {previewSource && (
-          <>
-            <Box sx={{ height: "1px", backgroundColor: ROW_DIVIDER, mx: "12px" }} />
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                p: "12px",
-                gap: "12px",
-                cursor: "pointer",
-                "&:hover": { backgroundColor: "rgba(0,0,0,0.03)" },
-              }}
-            >
-              <Switch
-                checked={false}
-                size="small"
-                sx={{
-                  flexShrink: 0,
-                  "& .MuiSwitch-track": { backgroundColor: "rgba(36,38,40,0.25)", opacity: 1 },
-                }}
-              />
-              <Typography
-                sx={{ fontSize: "14px", color: TEXT_DEFAULT, userSelect: "none", flex: 1, lineHeight: "20px" }}
-              >
-                Book or document in preview{" "}
-                <Box component="span" sx={{ color: "rgba(36,38,40,0.55)", fontSize: "13px" }}>
-                  [{previewSource.title}]
-                </Box>
-              </Typography>
-            </Box>
-          </>
-        )}
       </Popover>
     </>
   );
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function SourcesFilterButton(props: {
+  sources: Source[];
+  onToggle: (id: string) => void;
+  /** Label shown when every source is enabled (switch UI fallback). */
+  allLabel?: string;
+  /** Scope props. Omit to render nothing (e.g. the director home hero). */
+  mvp?: MvpScopeProps;
+}) {
+  return props.mvp ? <MvpScopeControl {...props.mvp} /> : null;
 }

@@ -349,7 +349,7 @@ export default function ResourceCenterPage() {
   const { tokens: { semantic: { color, radius } } } = useTheme();
   const [searchValue, setSearchValue] = useState("");
   const [visibleCount, setVisibleCount] = useState(5);
-  const { panelOpen, overlayOpen, openSmartAssist, closePanel, closeOverlay, expandToOverlay, collapseToPanel } = useSmartAssist();
+  const { panelOpen, overlayOpen, openPanel, openSmartAssist, closePanel, closeOverlay, expandToOverlay, collapseToPanel } = useSmartAssist();
 
   const showCommittee = !panelOpen;
   const showLastModified = !panelOpen;
@@ -452,37 +452,31 @@ export default function ResourceCenterPage() {
               </Typography>
 
               <Stack direction="row" alignItems="center" gap="16px">
-                <Button
-                  variant="contained"
-                  startIcon={<AddCircleIcon size="lg" />}
-                  sx={{ fontWeight: 600, fontSize: "16px", borderRadius: "12px", px: "12px" }}
-                >
-                  New workspace
-                </Button>
-
-                {!panelOpen && !overlayOpen && (
+                {!panelOpen && (
                   <Button
                     variant="outlined"
                     color="ai"
                     startIcon={<AiSparkleIcon size="lg" />}
-                    onClick={openSmartAssist}
+                    onClick={() => openSmartAssist()}
                     sx={{
-                      fontWeight: 600,
-                      fontSize: "16px",
-                      borderRadius: "12px",
+                      height: 40,
                       px: "12px",
+                      fontSize: "16px",
+                      fontFamily: "Inter, sans-serif",
+                      fontWeight: 600,
+                      lineHeight: "24px",
+                      letterSpacing: "0.16px",
+                      textTransform: "none",
                       border: "1px solid transparent !important",
                       backgroundColor: "transparent !important",
-                      backgroundImage:
-                        "linear-gradient(#fff, #fff), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
+                      backgroundImage: "linear-gradient(#fff, #fff), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
                       backgroundOrigin: "border-box !important",
                       backgroundClip: "padding-box, border-box !important",
                       "&::before": { display: "none" },
                       "&:hover, &:not(.Mui-disabled):hover": {
                         border: "1px solid transparent !important",
                         backgroundColor: "transparent !important",
-                        backgroundImage:
-                          "linear-gradient(#f3f3f3, #f3f3f3), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
+                        backgroundImage: "linear-gradient(#f3f3f3, #f3f3f3), linear-gradient(128deg, #b11f62 17.49%, #1c4ee4 100%) !important",
                         backgroundOrigin: "border-box !important",
                         backgroundClip: "padding-box, border-box !important",
                       },
@@ -492,6 +486,13 @@ export default function ResourceCenterPage() {
                     Smart Assist
                   </Button>
                 )}
+                <Button
+                  variant="contained"
+                  startIcon={<AddCircleIcon size="lg" />}
+                  sx={{ fontWeight: 600, fontSize: "16px", borderRadius: "12px", px: "12px" }}
+                >
+                  New workspace
+                </Button>
               </Stack>
             </Stack>
           </Box>

@@ -17,6 +17,8 @@ import {
 import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
 import SmartAssistSidenav from "../components/SmartAssistSidenav.js";
 import SmartAssistOverlay from "../components/SmartAssistOverlay.js";
+import { MVP_DIRECTOR_PROMPTS } from "../components/SuggestionChips.js";
+import { useSmartAssist } from "../context/SmartAssistContext.js";
 import { AiBadge, AiInaccuracyDisclaimer } from "../components/AiDisclaimers.js";
 import CalendarIcon from "@diligentcorp/atlas-react-bundle/icons/Calendar";
 import EducationCertificationIcon from "@diligentcorp/atlas-react-bundle/icons/EducationCertification";
@@ -53,12 +55,6 @@ const books = [
   { title: "Next-Gen Activewear: Strategic Development Overview", date: "Sept 19, 2025", committee: "Audit Committee", members: "+2", updates: 42 },
 ];
 
-const promptTemplates = [
-  { label: "Prepare for my meeting", description: '"What should I review before [committee] based on last meeting\'s follow-ups?"' },
-  { label: "Monitor trends", description: '"How has [risk / metric / topic] changed across the last [X] board cycles?"' },
-  { label: "Find a past decision", description: '"When did the board approve [policy], and what was resolved?"' },
-  { label: "Catch me up", description: '"Summarize key board decisions and highlights from the past year."' },
-];
 
 const competitorUpdates = [
   { title: "Computershare Posts Higher Fiscal 2025 Management Earnings, Lower Revenue", source: "Market Screener - Latest", date: "Aug 13, 2025", description: "Computershare Limited reported an increase in management earnings for fiscal year 2025, despite experiencing a decrease in revenue." },
@@ -150,7 +146,13 @@ function BookCard({ book }: { book: (typeof books)[0] & { onClick?: () => void }
 // SmartAssistPanel
 // ---------------------------------------------------------------------------
 
-function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) {
+function SmartAssistPanel({
+  onOpenAssistant,
+  onSelectTemplate,
+}: {
+  onOpenAssistant: () => void;
+  onSelectTemplate: (prompt: string) => void;
+}) {
   const { tokens: { semantic: { color, radius } } } = useTheme();
 
   // Figma tokens: accent/blue/background=#e4f3ff, accent/blue/content=#004c6c
@@ -184,22 +186,6 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
             overflow: "visible",
           }}
         >
-          {/* AI glow — anchored to bottom of header, mostly hidden behind it */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: "-10px",
-              left: 0,
-              right: 0,
-              height: "66px",
-              filter: "blur(20px)",
-              background: "linear-gradient(90deg, rgba(255,255,255,0.3) 0.9%, rgba(226,46,51,0.3) 15.8%, rgba(171,72,218,0.3) 50.5%, rgba(64,105,254,0.3) 84.3%, rgba(255,255,255,0.3) 100%)",
-              pointerEvents: "none",
-              zIndex: -1,
-            }}
-          >
-            <Box sx={{ position: "absolute", inset: 0, filter: "blur(40px)" }} />
-          </Box>
           <Stack direction="row" alignItems="center" gap="8px" /* spacing/1 */>
             <Box
               sx={{
@@ -242,7 +228,7 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
                   letterSpacing: "0.2px",
                 }}
               >
-                How can I assist you?
+                What would you like to know?
               </Typography>
               <Typography
                 sx={{
@@ -253,54 +239,60 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
                   letterSpacing: "0.2px",
                 }}
               >
-                Select one of the prompt templates or the Open Assistant button to get started
+                Select a prompt to get started, or ask your own question.
               </Typography>
             </Stack>
 
             {/* Prompt template list items */}
             <Stack sx={{ gap: 0 }}>
-              {promptTemplates.map((t, i) => (
+              {MVP_DIRECTOR_PROMPTS.map((t, i) => (
                 <Box
                   key={t.label}
-                  component="button"
+                  component=”button”
+                  onClick={() => onSelectTemplate(t.prompt)}
                   sx={{
-                    all: "unset",
-                    boxSizing: "border-box",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px" /* spacing/1 */,
-                    px: "8px" /* spacing/1 */,
-                    py: "12px" /* spacing/1_5 */,
-                    borderRadius: "12px" /* component/card/md/radius */,
-                    width: "100%",
-                    position: "relative",
-                    "&:hover": { backgroundColor: color.surface.variant.value },
+                    all: “unset”,
+                    boxSizing: “border-box”,
+                    cursor: “pointer”,
+                    display: “flex”,
+                    alignItems: “center”,
+                    gap: “8px” /* spacing/1 */,
+                    px: “8px” /* spacing/1 */,
+                    py: “12px” /* spacing/1_5 */,
+                    borderRadius: “12px” /* component/card/md/radius */,
+                    width: “100%”,
+                    position: “relative”,
+                    “&:hover”: { backgroundColor: color.surface.variant.value },
                   }}
                 >
-                  <Stack gap="12px" /* spacing/1_5 */ sx={{ flex: 1 }}>
-                    {/* Accent pill chip */}
+                  <Stack gap=”12px” /* spacing/1_5 */ sx={{ flex: 1 }}>
+                    {/* Accent pill chip with icon */}
                     <Box>
                       <Box
                         sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          height: "24px",
-                          px: "12px" /* spacing/1_5 */,
-                          py: "2px" /* spacing/0_25 */,
-                          borderRadius: "9999px" /* radius/full */,
+                          display: “inline-flex”,
+                          alignItems: “center”,
+                          gap: “6px”,
+                          height: “24px”,
+                          px: “10px”,
+                          py: “2px” /* spacing/0_25 */,
+                          borderRadius: “9999px” /* radius/full */,
                           backgroundColor: chipBg,
+                          color: chipText,
                         }}
                       >
+                        <Box sx={{ display: “flex”, fontSize: “14px”, color: “inherit” }}>
+                          <t.Icon />
+                        </Box>
                         <Typography
                           sx={{
-                            fontSize: "12px",
+                            fontSize: “12px”,
                             fontWeight: 600,
-                            color: chipText,
-                            lineHeight: "16px",
-                            letterSpacing: "0.3px",
-                            whiteSpace: "nowrap",
-                            wordWrap: "break-word",
+                            color: “inherit”,
+                            lineHeight: “16px”,
+                            letterSpacing: “0.3px”,
+                            whiteSpace: “nowrap”,
+                            wordWrap: “break-word”,
                           }}
                         >
                           {t.label}
@@ -309,26 +301,26 @@ function SmartAssistPanel({ onOpenAssistant }: { onOpenAssistant: () => void }) 
                     </Box>
                     <Typography
                       sx={{
-                        fontSize: "12px",
+                        fontSize: “12px”,
                         fontWeight: 400,
                         color: color.type.muted.value,
-                        lineHeight: "16px",
-                        letterSpacing: "0.3px",
-                        wordWrap: "break-word",
+                        lineHeight: “16px”,
+                        letterSpacing: “0.3px”,
+                        wordWrap: “break-word”,
                       }}
                     >
-                      {t.description}
+                      {`”${t.prompt}”`}
                     </Typography>
                   </Stack>
                   {/* Divider */}
-                  {i < promptTemplates.length - 1 && (
+                  {i < MVP_DIRECTOR_PROMPTS.length - 1 && (
                     <Box
                       sx={{
-                        position: "absolute",
+                        position: “absolute”,
                         bottom: 0,
                         left: 0,
                         right: 0,
-                        height: "1px",
+                        height: “1px”,
                         backgroundColor: color.ui.divider.default.value,
                       }}
                     />
@@ -471,8 +463,17 @@ export default function IndexPage() {
   const [overlayOpen, setOverlayOpen] = useState(false);
   const { tokens: { core: { spacing } }, presets: { TabsPresets } } = useTheme();
   const navigate = useNavigate();
+  const { setPrompt, requestComposerFocus } = useSmartAssist();
 
   const handleOpenAssistant = () => setSidenavOpen(true);
+  // Selecting a prompt template drops it into the composer, opens the panel,
+  // and focuses the input (requestComposerFocus is consumed once the panel's
+  // composer mounts) so the chatbox lands active and ready to send.
+  const handleSelectTemplate = (prompt: string) => {
+    setPrompt(prompt);
+    requestComposerFocus();
+    setSidenavOpen(true);
+  };
   const handleExpand = () => { setSidenavOpen(false); setOverlayOpen(true); };
   const handleCollapseOverlay = () => { setOverlayOpen(false); setSidenavOpen(true); };
 
@@ -528,7 +529,7 @@ export default function IndexPage() {
             </Stack>
 
             {/* Right panel */}
-            <SmartAssistPanel onOpenAssistant={handleOpenAssistant} />
+            <SmartAssistPanel onOpenAssistant={handleOpenAssistant} onSelectTemplate={handleSelectTemplate} />
           </Box>
         )}
       </div>

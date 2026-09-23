@@ -28,6 +28,10 @@ export type RichBlock = RichParagraph | RichHeader | RichList | RichTable;
 // ─── Conversation variants ────────────────────────────────────────────────────
 
 interface ConversationVariant {
+  /** Replaces the user's actual typed text in the chat bubble. */
+  userQuestion: string;
+  /** ≤5-word title used for the thread list entry (AI-generated style). */
+  threadTitle: string;
   sources: ChatMessage["sources"];
   richContent: RichBlock[];
 }
@@ -43,6 +47,8 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
   //   [6] Minutes p.5 — Cybersecurity section
   //   [7] Resolution p.4 — Roles, sign-off, Tabletop cadence
   {
+    userQuestion: "What was formally approved at the last board meeting?",
+    threadTitle: "Last board meeting approvals",
     sources: [
       { index: 1, title: "Minutes, Board meeting Q4 2025",                              book: "Board Book Q4 2025", page: "3", documentId: "minutes-q4-2025", targetPage: 3 },
       { index: 2, title: "FY2026 Operating Plan & Budget",                              book: "Board Book Q4 2025", page: "3", documentId: "fy2026-plan",      targetPage: 3 },
@@ -106,6 +112,8 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
   //   [3] Minutes p.5 — Cybersecurity section
   //   [4] Resolution p.2 — Resolution text
   {
+    userQuestion: "How did the Incident Response Framework come to be approved?",
+    threadTitle: "Incident Response Framework history",
     sources: [
       { index: 1, title: "Risk & Cybersecurity Update",                              book: "Board Book Q3 2024", page: "3", documentId: "risk-cyber-2024-q3", targetPage: 3 },
       { index: 2, title: "Risk & Cybersecurity Update",                              book: "Board Book Q3 2024", page: "4", documentId: "risk-cyber-2024-q3", targetPage: 4 },
@@ -146,7 +154,7 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
     ],
   },
 
-  // ── Variant 2 — plain prose + table ──────────────────────────────────────
+  // ── Variant 2 — full summary with cybersecurity detail ───────────────────
   // Cites in order of first appearance:
   //   [1]  Minutes p.6        — Resolutions, Action Items, Sign-Off (intro prose)
   //   [2]  Minutes p.5        — Cybersecurity section (relevance prose)
@@ -160,6 +168,8 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
   //   [10] Risk & Cyber p.4   — Findings / roadmap (evolution prose)
   // Reuses: table row 3 desc reuses [3] and [2]; final prose reuses [8].
   {
+    userQuestion: "Can you give me a summary of recent approvals and how the cybersecurity decision evolved?",
+    threadTitle: "Recent approvals and cyber evolution",
     sources: [
       { index: 1,  title: "Minutes, Board meeting Q4 2025",                            book: "Board Book Q4 2025", page: "6", documentId: "minutes-q4-2025",    targetPage: 6 },
       { index: 2,  title: "Minutes, Board meeting Q4 2025",                            book: "Board Book Q4 2025", page: "5", documentId: "minutes-q4-2025",    targetPage: 5 },
@@ -250,6 +260,87 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
   },
 ];
 
+// ─── Director home (outside-book) conversation variants ──────────────────────
+// Shown when the director is on the home page, books list, or resource centre —
+// i.e. not inside a book reader. Library-scoped questions that don't assume a
+// specific book is open.
+
+export const DIRECTOR_HOME_CONVERSATION_VARIANTS: ConversationVariant[] = [
+  // ── Variant 0 — upcoming meetings + ready books ──────────────────────────
+  {
+    userQuestion: "What meetings do I have coming up, and which board books are ready?",
+    threadTitle: "Upcoming meetings and board books",
+    sources: [
+      { index: 1, title: "Q2 2026 Board Package",               book: "Q2 2026 Board Package",  page: "1", documentId: "q2-2026-board-package",    targetPage: 1 },
+      { index: 2, title: "Audit Committee Report — June 2026",  book: "Q2 2026 Board Package",  page: "2", documentId: "audit-committee-jun-2026", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "You have two upcoming meetings on the calendar and the following board materials are ready to review:",
+        ],
+      },
+      {
+        type: "table",
+        defaultTextColor: true,
+        columns: ["Meeting", "Date", "Status"],
+        rows: [
+          [
+            ["Full Board Meeting — Q2 2026"],
+            ["15 July 2026"],
+            ["Board pack distributed.", " ", { cite: 1 }],
+          ],
+          [
+            ["Audit Committee — June 2026"],
+            ["18 July 2026"],
+            ["Agenda and Audit Committee report included in pack.", " ", { cite: 2 }],
+          ],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "The Q2 2026 Board Package is your most recent book. Click a citation to open it directly.",
+        ],
+      },
+    ],
+  },
+
+  // ── Variant 1 — cross-book governance summary ────────────────────────────
+  {
+    userQuestion: "Can you give me a quick governance summary across my recent board books?",
+    threadTitle: "Governance summary across recent books",
+    sources: [
+      { index: 1, title: "Minutes, Board meeting Q4 2025",              book: "Board Book Q4 2025",    page: "4", documentId: "minutes-q4-2025",          targetPage: 4 },
+      { index: 2, title: "CFO Commentary — Q2 2026",                    book: "Q2 2026 Board Package", page: "2", documentId: "cfo-commentary-q2-2026",    targetPage: 2 },
+      { index: 3, title: "Q2 2026 Board Pack — Risk & Compliance Update", book: "Q2 2026 Board Package", page: "2", documentId: "risk-compliance-q2-2026", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Here's a high-level governance summary drawn from your last two board books:",
+        ],
+      },
+      {
+        type: "list",
+        items: [
+          ["In Q4 2025 the Board approved the FY2026 budget, adopted the Incident Response Framework, and committed management to three follow-up actions for Q1 2026.", " ", { cite: 1 }],
+          ["The Q2 2026 pack shows all three December follow-ups have been addressed: Q1 variance reporting delivered, the IR tabletop confirmed, and the two OCC MRAs closed with accepted plans.", " ", { cite: 2 }],
+          ["Current open items include approval of a $150M Q3 2026 share buyback and a risk update on CRE office exposure now at 3.4% of the loan book.", " ", { cite: 3 }],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "Open the Q2 2026 Board Package to read the full detail on any of these items.",
+        ],
+      },
+    ],
+  },
+];
+
 // ─── Director conversation variants ───────────────────────────────────────────
 // Director-side cycle (4 variants) covering an Audit Committee prep flow:
 //   Variant 0 → outstanding follow-ups from last meeting
@@ -258,46 +349,51 @@ export const CONVERSATION_VARIANTS: ConversationVariant[] = [
 //   Variant 3 → one-paragraph briefing note synthesis
 
 export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
-  // ── Variant 0 — outstanding follow-ups from last AC meeting ──────────────
+  // ── Variant 0 — follow-up status: mix of same-book (Q2 pack) + cross-book ─
+  // Deliberately contains both kinds of citation so the in-book-scroll and the
+  // cross-book-overlay behaviours can be validated from a single response.
+  //   [1] Minutes Q4 2025 p.4      → cross-book  (bb-q4-2025)  → opens overlay
+  //   [2] CFO Commentary Q2 2026   → same-book   (bookId "1")  → scrolls in book
+  //   [3] IR Resolution Q4 2025    → cross-book  (bb-q4-2025)  → opens overlay
+  //   [4] Cyber Quarterly Q2 2026  → same-book   (bookId "1")  → scrolls in book
+  //   [5] Audit Committee Jun 2026 → same-book   (bookId "1")  → scrolls in book
   {
+    userQuestion: "Which follow-up items from the December board meeting have been addressed in this pack, and what is still open?",
+    threadTitle: "December follow-up items status",
     sources: [
-      { index: 1, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "4", documentId: "minutes-q4-2025", targetPage: 4 },
-      { index: 2, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "5", documentId: "minutes-q4-2025", targetPage: 5 },
-      { index: 3, title: "Minutes, Board meeting Q4 2025", book: "Board Book Q4 2025", page: "5", documentId: "minutes-q4-2025", targetPage: 5 },
+      { index: 1, title: "Minutes, Board meeting Q4 2025",          book: "Board Book Q4 2025",    page: "4", documentId: "minutes-q4-2025",       targetPage: 4 },
+      { index: 2, title: "CFO Commentary — Q2 2026",                book: "Q2 2026 Board Package", page: "2", documentId: "cfo-commentary-q2-2026", targetPage: 2 },
+      { index: 3, title: "Resolution – Approval of Incident Response Framework", book: "Board Book Q4 2025", page: "4", documentId: "ir-resolution", targetPage: 4 },
+      { index: 4, title: "Cybersecurity Quarterly Update — Q2 2026", book: "Q2 2026 Board Package", page: "2", documentId: "cyber-quarterly-q2-2026", targetPage: 2 },
+      { index: 5, title: "Audit Committee Report — June 2026",       book: "Q2 2026 Board Package", page: "2", documentId: "audit-committee-jun-2026", targetPage: 2 },
     ],
     richContent: [
       {
         type: "p",
         spans: [
-          "Based on the September 18, 2025 Audit Committee meeting minutes, there are three outstanding follow-up items assigned to management:",
+          "Three follow-up items were committed at the December 10, 2025 board meeting.", " ", { cite: 1 }, " Here is their current status in the Q2 2026 pack:",
         ],
       },
       {
         type: "table",
         defaultTextColor: true,
-        columns: ["Follow-up", "Assigned to", "Status"],
+        columns: ["Follow-up item", "Committed by", "Status in Q2 pack"],
         rows: [
           [
-            ["Circulate final approved FY2026 budget deck and initiate quarterly variance reporting from Q1 2026", " ", { cite: 1 }],
+            ["Provide quarterly variance reporting against the approved FY2026 budget from Q1 2026", " ", { cite: 1 }],
             ["CFO"],
-            ["Due Q1 2026 — first update expected at this meeting"],
+            ["Delivered — Q2 variance and NIM walk covered in CFO Commentary.", " ", { cite: 2 }],
           ],
           [
-            ["Finalize and publish the Incident Response Framework internally", " ", { cite: 2 }],
-            ["CISO / Management"],
-            ["Marked complete per December materials"],
-          ],
-          [
-            ["Schedule tabletop incident response exercise for early 2026", " ", { cite: 3 }],
+            ["Schedule tabletop incident response exercise in early 2026", " ", { cite: 3 }],
             ["CISO"],
-            ["Pending — no confirmed date in materials"],
+            ["Update provided — tabletop date confirmed and third-party threat surface reviewed.", " ", { cite: 4 }],
           ],
-        ],
-      },
-      {
-        type: "p",
-        spans: [
-          "The CFO report and CISO update in your current pack are the most relevant starting points for each item.",
+          [
+            ["Close OCC third-party review MRAs with accepted remediation plans", " ", { cite: 5 }],
+            ["Management / Audit Committee"],
+            ["Complete — two MRAs closed with accepted plans, noted in Audit Committee report.", " ", { cite: 5 }],
+          ],
         ],
       },
     ],
@@ -305,6 +401,8 @@ export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
 
   // ── Variant 1 — CFO report on Q1 variance ────────────────────────────────
   {
+    userQuestion: "What does the CFO report say about Q1 performance versus budget?",
+    threadTitle: "CFO report Q1 vs budget",
     sources: [
       { index: 1, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
       { index: 2, title: "FY2026 Operating Plan & Budget",  book: "Board Book Q4 2025", page: "4", documentId: "fy2026-plan",            targetPage: 4 },
@@ -336,6 +434,8 @@ export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
 
   // ── Variant 2 — revenue variance compared across last 3 meetings ─────────
   {
+    userQuestion: "How has revenue performance been tracking across the last three board meetings?",
+    threadTitle: "Revenue tracking across board meetings",
     sources: [
       { index: 1, title: "CFO Q1 Variance Report",          book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
       { index: 2, title: "FY2026 Operating Plan & Budget",  book: "Board Book Q4 2025", page: "2", documentId: "fy2026-plan",            targetPage: 2 },
@@ -381,6 +481,8 @@ export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
 
   // ── Variant 3 — one-paragraph briefing note ──────────────────────────────
   {
+    userQuestion: "Can you draft a briefing note summarising the key items for the upcoming March 2026 Audit Committee meeting?",
+    threadTitle: "Audit Committee briefing note draft",
     sources: [
       { index: 1, title: "CFO Q1 Variance Report",         book: "Board Book Q1 2026", page: "2", documentId: "cfo-q1-variance-report", targetPage: 2 },
       { index: 2, title: "FY2026 Operating Plan & Budget", book: "Board Book Q4 2025", page: "3", documentId: "fy2026-plan",            targetPage: 3 },
@@ -401,6 +503,45 @@ export const DIRECTOR_CONVERSATION_VARIANTS: ConversationVariant[] = [
       },
     ],
   },
+
+  // ── Variant 4 — Q2 2026 Board Package deep-dive (same-book citations) ────
+  // All sources belong to bookId "1" (Q2 2026 Board Package). When the
+  // director is reading that book in panel mode, clicking any of these chips
+  // scrolls the assembled book in place rather than opening the overlay.
+  {
+    userQuestion: "What are the key financial and risk highlights from this board pack?",
+    threadTitle: "Q2 financial and risk highlights",
+    sources: [
+      { index: 1, title: "CFO Commentary — Q2 2026",                      book: "Q2 2026 Board Package", page: "2", documentId: "cfo-commentary-q2-2026",  targetPage: 2 },
+      { index: 2, title: "Q2 2026 Consolidated Financial Statements",      book: "Q2 2026 Board Package", page: "2", documentId: "fin-statements-q2-2026",  targetPage: 2 },
+      { index: 3, title: "Q2 2026 Board Pack — Risk & Compliance Update",  book: "Q2 2026 Board Package", page: "2", documentId: "risk-compliance-q2-2026", targetPage: 2 },
+      { index: 4, title: "Capital Plan and Buyback Proposal — Q3 2026",    book: "Q2 2026 Board Package", page: "2", documentId: "capital-plan-q3-2026",    targetPage: 2 },
+      { index: 5, title: "Cybersecurity Quarterly Update — Q2 2026",       book: "Q2 2026 Board Package", page: "2", documentId: "cyber-quarterly-q2-2026", targetPage: 2 },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Here are the key financial and risk highlights from your Q2 2026 Board Package:",
+        ],
+      },
+      {
+        type: "list",
+        items: [
+          ["Revenue grew 8.3% year-on-year to $1.24B, with net interest margin compressing 18 bp to 2.61% as deposit repricing lagged asset yields.", " ", { cite: 1 }, " ", { cite: 2 }],
+          ["CRE office exposure is down to 3.4% of total loans ($1.42B) following $260M in run-off; two single-name relationships migrated to watchlist with $11M of specific reserves established.", " ", { cite: 3 }],
+          ["The Board is asked to approve a $150M share buyback for Q3 2026, representing approximately 2.1% of current market capitalisation, subject to CET1 remaining above 12.5%.", " ", { cite: 4 }],
+          ["An incremental $3.2M cyber spend has been approved following the FS-ISAC advisory; the OCC third-party review closed with two MRAs, both with accepted remediation plans.", " ", { cite: 5 }],
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "Click any citation to jump directly to the relevant page in this book.",
+        ],
+      },
+    ],
+  },
 ];
 
 // ─── Thread conversations (for sidenav history) ───────────────────────────────
@@ -413,6 +554,10 @@ export interface ChatThread {
   messages: ChatMessage[];
   sourceContext?: string;
   previewDocumentId?: string;
+  /** True when this thread represents a project folder (not a regular chat) */
+  isProject?: boolean;
+  /** ID of the parent project thread, if this thread belongs to a project */
+  projectId?: string;
 }
 
 // ── Thread 1: Q1 2026 director compensation summary ──────────────────────────
@@ -654,14 +799,21 @@ const BOARD_EVAL_MESSAGES: ChatMessage[] = [
 ];
 
 export const STATIC_CHAT_THREADS: ChatThread[] = [
-  { id: "th-1", title: "Q1 2026 director compensation summary",       createdAt: "2026-05-03T09:14:00+0200", updatedAt: "2026-05-03T09:21:00+0200", messages: COMPENSATION_MESSAGES },
-  { id: "th-2", title: "Audit committee minutes — Q4 2025 risks",    createdAt: "2026-05-02T14:05:00+0200", updatedAt: "2026-05-02T14:12:00+0200", messages: AUDIT_RISKS_MESSAGES },
-  { id: "th-3", title: "ESG disclosure trends across last 4 meetings",createdAt: "2026-04-27T10:45:00+0200", updatedAt: "2026-04-27T10:52:00+0200", messages: ESG_MESSAGES },
-  { id: "th-4", title: "Cybersecurity resolution status",             createdAt: "2026-04-26T15:30:00+0200", updatedAt: "2026-04-26T15:30:00+0200", messages: CYBER_MESSAGES },
-  { id: "th-5", title: "CEO succession discussion history",           createdAt: "2026-04-20T11:00:00+0200", updatedAt: "2026-04-20T11:08:00+0200", messages: SUCCESSION_MESSAGES },
+  { id: "th-1", title: "Cybersecurity",                               createdAt: "2026-05-03T09:14:00+0200", updatedAt: "2026-05-03T09:21:00+0200", messages: COMPENSATION_MESSAGES, isProject: true },
+  { id: "th-2", title: "Management of Third-Party Risk Discussions",  createdAt: "2026-05-02T14:05:00+0200", updatedAt: "2026-05-02T14:12:00+0200", messages: AUDIT_RISKS_MESSAGES },
+  { id: "th-3", title: "Feedback from Recent Training Sessions",      createdAt: "2026-04-27T10:45:00+0200", updatedAt: "2026-04-27T10:52:00+0200", messages: ESG_MESSAGES },
+  { id: "th-4", title: "Concerns Regarding Data Privacy Issues",      createdAt: "2026-04-26T15:30:00+0200", updatedAt: "2026-04-26T15:30:00+0200", messages: CYBER_MESSAGES },
+  { id: "th-5", title: "Overview of Recent Regulatory Changes",       createdAt: "2026-04-20T11:00:00+0200", updatedAt: "2026-04-20T11:08:00+0200", messages: SUCCESSION_MESSAGES },
   { id: "th-6", title: "Bylaws amendment redline questions",          createdAt: "2026-04-13T09:50:00+0200", updatedAt: "2026-04-13T09:57:00+0200", messages: BYLAWS_MESSAGES },
   { id: "th-7", title: "Related-party transaction approvals 2025",   createdAt: "2026-04-04T14:30:00+0200", updatedAt: "2026-04-04T14:30:00+0200", messages: RELATED_PARTY_MESSAGES },
   { id: "th-8", title: "Board evaluation survey themes",             createdAt: "2026-04-03T10:10:00+0200", updatedAt: "2026-04-03T10:17:00+0200", messages: BOARD_EVAL_MESSAGES },
+  // Cybersecurity project child threads (projectId: "th-1")
+  { id: "th-cyber-1", title: "Incident Response Framework adoption status", createdAt: "2026-09-15T10:00:00+0200", updatedAt: "2026-09-15T10:00:00+0200", messages: [], projectId: "th-1" },
+  { id: "th-cyber-2", title: "Q3 2026 cybersecurity metrics review",        createdAt: "2026-08-20T14:30:00+0200", updatedAt: "2026-08-20T14:30:00+0200", messages: [], projectId: "th-1" },
+  { id: "th-cyber-3", title: "Third-party vendor security audits",           createdAt: "2026-07-08T09:15:00+0200", updatedAt: "2026-07-08T09:15:00+0200", messages: [], projectId: "th-1" },
+  { id: "th-cyber-4", title: "Ransomware threat landscape briefing",         createdAt: "2026-06-14T11:45:00+0200", updatedAt: "2026-06-14T11:45:00+0200", messages: [], projectId: "th-1" },
+  { id: "th-cyber-5", title: "Board cyber risk tolerance framework",         createdAt: "2026-05-22T16:00:00+0200", updatedAt: "2026-05-22T16:00:00+0200", messages: [], projectId: "th-1" },
+  { id: "th-cyber-6", title: "Annual penetration test findings",             createdAt: "2026-04-10T09:30:00+0200", updatedAt: "2026-04-10T09:30:00+0200", messages: [], projectId: "th-1" },
 ];
 
 // ─── Onboarding ───────────────────────────────────────────────────────────────
@@ -705,9 +857,10 @@ export const ONBOARDING_RICH_BLOCKS: RichBlock[] = [
   },
   {
     type: "p",
-    spans: ["Your queries are private — they're not shared with other users or used to train AI models, and I only search documents within your existing permissions. From the ⋮ menu you can personalize Smart Assist to get answers tailored to your role and priorities, and learn how your data is protected."],
+    spans: ["Your queries are private — they're not shared with other users or used to train AI models, and I only search documents within your existing permissions."],
   },
 ];
+
 
 export const ONBOARDING_RESPONSE_CONTENT = `I search across your organization's board materials in Boards Cloud — **current books, archived books, and resource centre documents** — and give you answers with citations back to the source.
 
@@ -729,9 +882,141 @@ export const ONBOARDING_RESPONSE_CONTENT = `I search across your organization's 
 - Generate opinions, predictions, or speculative analysis
 - Execute tasks or generate reports
 
-Your queries are private — they're not shared with other users or used to train AI models, and I only search documents within your existing permissions.
-From the ⋮ menu you can **personalize Smart Assist** to get answers tailored to your role and priorities, and **learn how your data is protected**.`;
+Your queries are private — they're not shared with other users or used to train AI models, and I only search documents within your existing permissions.`;
 
 // ─── Context chips ────────────────────────────────────────────────────────────
 
 export const CONTEXT_CHIPS = ["Board meeting Q4 2025", "Minutes"];
+
+// ─── Grounded-state trigger responses (Board Book Q4 2025 demo) ───────────────
+
+export interface TriggerResponse {
+  threadTitle: string;
+  sources: ChatMessage["sources"];
+  richContent: RichBlock[];
+}
+
+function normaliseQuery(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/['']/g, "'")
+    .replace(/\s+/g, " ")
+    .replace(/[?.]+$/, "");
+}
+
+const TRIGGER_MAP: Record<string, TriggerResponse> = {
+  "summarize the board's cybersecurity discussions from 2022 to 2025": {
+    threadTitle: "Cybersecurity discussions 2022–2025",
+    sources: [
+      { index: 1, title: "Risk Committee Report — Q2 2023",    book: "Board Book Q4 2025", page: "4" },
+      { index: 2, title: "Board Minutes — November 2024",       book: "Board Book Q4 2025", page: "5" },
+      { index: 3, title: "Audit Committee Minutes — Q1 2025",  book: "Board Book Q4 2025", page: "3" },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "I found cybersecurity discussions from Q2 2023 onward, but nothing from 2022 in your board materials. The summary below covers 2023 to 2025.",
+        ],
+      },
+      {
+        type: "p",
+        spans: [
+          "The board first recorded cybersecurity as a standing risk item in the Q2 2023 Risk Committee report, after a third-party penetration test. ",
+          { cite: 1 },
+          " Through 2024, discussion focused on vendor access controls and the rollout of multi-factor authentication across board systems. ",
+          { cite: 2 },
+          " The most recent update, in the Q1 2025 Audit Committee minutes, noted that all high-severity findings from the 2024 review were remediated. ",
+          { cite: 3 },
+        ],
+      },
+      { type: "p", spans: ["AI-generated content may have inaccuracies."] },
+    ],
+  },
+
+  "what is the board's policy on cryptocurrency investments": {
+    threadTitle: "Cryptocurrency investment policy",
+    sources: [],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "I couldn't find information about cryptocurrency investments in your board materials. To refine your search, narrow it to a specific book or time period, or rephrase your question.",
+        ],
+      },
+    ],
+  },
+
+  "what is the board's regulatory filing deadline for the annual report": {
+    threadTitle: "Annual report filing deadline",
+    sources: [
+      { index: 1, title: "Board Minutes — March 2025",           book: "Board Book Q4 2025", page: "2" },
+      { index: 2, title: "Governance Committee Pack — Q2 2025", book: "Board Book Q4 2025", page: "7" },
+    ],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Your materials give two different dates for the annual report filing deadline, and I can't determine which is current:",
+        ],
+      },
+      {
+        type: "list",
+        items: [
+          [
+            "The March 2025 board minutes record the deadline as 30 April 2025. ",
+            { cite: 1 } as Cite,
+          ],
+          [
+            "The Q2 2025 Governance Committee pack lists it as 15 May 2025. ",
+            { cite: 2 } as Cite,
+          ],
+        ],
+      },
+      {
+        type: "p",
+        spans: ["This touches a statutory filing. To confirm the binding date, check with your board secretary."],
+      },
+      { type: "p", spans: ["AI-generated content may have inaccuracies."] },
+    ],
+  },
+
+  "draft a marketing email announcing our new product launch": {
+    threadTitle: "Out-of-scope request",
+    sources: [],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "Smart Assist is built for governance work — your board materials, committee decisions, regulatory context, and meeting preparation. Drafting product marketing sits outside that. If you're preparing board communications about the launch, I can help you find what your materials say about it.",
+        ],
+      },
+    ],
+  },
+
+  "what is ebitda": {
+    threadTitle: "EBITDA definition",
+    sources: [],
+    richContent: [
+      {
+        type: "p",
+        spans: [
+          "EBITDA is earnings before interest, taxes, depreciation, and amortization — a measure of operating profitability before those items are deducted.",
+        ],
+      },
+      {
+        type: "p",
+        spans: ["General knowledge — not from your board materials."],
+      },
+      {
+        type: "p",
+        spans: ["Want me to search your materials for how EBITDA appears in your board's financial reporting?"],
+      },
+    ],
+  },
+};
+
+export function matchTriggerResponse(text: string): TriggerResponse | null {
+  return TRIGGER_MAP[normaliseQuery(text)] ?? null;
+}

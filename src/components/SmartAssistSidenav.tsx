@@ -7,6 +7,9 @@ import {
   IconButton,
   InputBase,
   Stack,
+  Tab,
+  Tabs,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -24,8 +27,8 @@ import {
 } from "@diligentcorp/atlas-react-bundle";
 
 import AiSparkleIcon from "@diligentcorp/atlas-react-bundle/icons/AiSparkle";
-import { SmartSummaryIcon, SmartPrepIcon, SmartRiskScannerIcon } from "./InsightIcons.js";
-import { InsightSummaryView, InsightPrepView, InsightRiskView } from "./InsightDetailViews.js";
+import { SmartSummaryIcon, SmartPrepIcon, SmartRiskScannerIcon, AuditSmartPrepIcon } from "./InsightIcons.js";
+import { InsightSummaryView, InsightPrepView, InsightRiskView, InsightAuditView } from "./InsightDetailViews.js";
 import { AiBadge, AiInaccuracyDisclaimer } from "./AiDisclaimers.js";
 import AddCircleIcon from "@diligentcorp/atlas-react-bundle/icons/AddCircle";
 import ArrowLeftIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowLeft";
@@ -33,17 +36,23 @@ import ArrowUpIcon from "@diligentcorp/atlas-react-bundle/icons/ArrowUp";
 import CloseIcon from "@diligentcorp/atlas-react-bundle/icons/Close";
 import ExpandRightIcon from "@diligentcorp/atlas-react-bundle/icons/ExpandRight";
 import FullscreenIcon from "@diligentcorp/atlas-react-bundle/icons/Fullscreen";
+import SettingsIcon from "@diligentcorp/atlas-react-bundle/icons/Settings";
 import MoreIcon from "@diligentcorp/atlas-react-bundle/icons/More";
+import BellIcon from "@diligentcorp/atlas-react-bundle/icons/Bell";
+import FolderIcon from "@diligentcorp/atlas-react-bundle/icons/Folder";
+import MessageIcon from "@diligentcorp/atlas-react-bundle/icons/Message";
+import PinIcon from "@diligentcorp/atlas-react-bundle/icons/Pin";
 import ReloadIcon from "@diligentcorp/atlas-react-bundle/icons/Reload";
+import TaskIcon from "@diligentcorp/atlas-react-bundle/icons/Task";
 
-import { type SuggestionCard, suggestionCards, directorSuggestionCards } from "../data/mockData.js";
-import { type ChatThread, ONBOARDING_PROMPT } from "../data/hybrid-search.constants.js";
+import { type ChatThread } from "../data/hybrid-search.constants.js";
 import RichAIMessageContent, { parseCiteText } from "./RichAIMessageContent.js";
 import SourcesBlock from "./SourcesBlock.js";
 import SourcesFilterButton from "./SourcesFilterButton.js";
+import SuggestionChips from "./SuggestionChips.js";
 import AIMoreMenu from "./AIMoreMenu.js";
 import ChatThreadItem from "./ChatThreadItem.js";
-import PersonalizationDialog from "./PersonalizationDialog.js";
+import DeleteAllChatsMenu from "./DeleteAllChatsMenu.js";
 import { useSmartAssist } from "../context/SmartAssistContext.js";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -53,71 +62,37 @@ const THREAD_BG = "linear-gradient(135deg, #f9f9fc 31%, #fcfcff 100%)";
 const AI_PURPLE = "#ab48da";
 const DRAWER_WIDTH = 440;
 
-// ─── Suggestion cards ─────────────────────────────────────────────────────────
+// ─── Composer toolbar icons ───────────────────────────────────────────────────
 
-function SuggestionCards({
-  cards,
-  onSelect,
-}: {
-  cards: SuggestionCard[];
-  onSelect: (prompt: string) => void;
-}) {
-  const { tokens: { semantic: { color, radius } } } = useTheme();
-
+function UploadFileIcon() {
   return (
-    <Stack gap="12px" sx={{ px: "4px" }}>
-      <Stack gap="4px">
-        <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: "20px", color: color.type.default.value }}>
-          Ideas to get you started
-        </Typography>
-        <Typography variant="textSm" sx={{ color: color.type.muted.value }}>
-          Click on one of the suggested prompt templates to populate the search field
-        </Typography>
-      </Stack>
-      <Stack gap="10px">
-        {cards.map((card) => (
-          <Box
-            key={card.prompt}
-            component="button"
-            onClick={() => onSelect(card.prompt.replace(/["“”]/g, ""))}
-            sx={{
-              all: "unset",
-              boxSizing: "border-box",
-              cursor: "pointer",
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              p: "12px",
-              borderRadius: radius.lg.value,
-              border: `1px solid ${color.ui.divider.default.value}`,
-              backgroundColor: color.surface.default.value,
-              textAlign: "left",
-              transition: "background-color 0.15s ease",
-              "&:hover": { backgroundColor: color.surface.variant.value },
-            }}
-          >
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                height: "24px",
-                px: "12px",
-                borderRadius: "9999px",
-                backgroundColor: color.accent.blue.background.value,
-                width: "fit-content",
-              }}
-            >
-              <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#004c6c", lineHeight: "16px", letterSpacing: "0.3px", wordWrap: "break-word" }}>
-                {card.category}
-              </Typography>
-            </Box>
-            <Typography sx={{ fontSize: "12px", fontWeight: 400, color: color.type.muted.value, lineHeight: "16px", letterSpacing: "0.3px", wordWrap: "break-word" }}>
-              {card.prompt}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
-    </Stack>
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.58334 18.2372C8.36433 18.2372 7.32774 17.8101 6.47357 16.9559C5.6194 16.1018 5.19232 15.0652 5.19232 13.8462V4.83972C5.19232 3.96272 5.50459 3.21195 6.12913 2.58743C6.75366 1.9629 7.50443 1.65063 8.38143 1.65063C9.25843 1.65063 10.0092 1.9629 10.6337 2.58743C11.2582 3.21195 11.5705 3.96272 11.5705 4.83972V12.9647C11.5705 13.5211 11.3784 13.9914 10.9942 14.3756C10.6099 14.7598 10.1396 14.9519 9.58311 14.9519C9.02664 14.9519 8.55636 14.7598 8.17228 14.3756C7.78821 13.9914 7.59618 13.5211 7.59618 12.9647V4.83972H8.58974V12.9647C8.58974 13.2463 8.68496 13.4822 8.87541 13.6727C9.06585 13.8631 9.30183 13.9583 9.58334 13.9583C9.86486 13.9583 10.1008 13.8631 10.2913 13.6727C10.4817 13.4822 10.5769 13.2463 10.5769 12.9647V4.83972C10.5769 4.22497 10.3646 3.70536 9.94005 3.28091C9.51545 2.85643 8.99568 2.6442 8.38074 2.6442C7.76581 2.6442 7.24627 2.85643 6.82211 3.28091C6.39797 3.70536 6.18591 4.22497 6.18591 4.83972V13.8462C6.18591 14.7842 6.51763 15.5849 7.18109 16.2484C7.84455 16.9119 8.6453 17.2436 9.58334 17.2436C10.5214 17.2436 11.3221 16.9119 11.9856 16.2484C12.6491 15.5849 12.9808 14.7842 12.9808 13.8462V4.83972H13.9744V13.8462C13.9744 15.0652 13.5473 16.1018 12.6931 16.9559C11.8389 17.8101 10.8024 18.2372 9.58334 18.2372Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function ToolsSliderIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.37498 17.2916V12.7083H10.6249V14.375H17.2916V15.6249H10.6249V17.2916H9.37498ZM2.70831 15.6249V14.375H7.29161V15.6249H2.70831ZM6.04165 12.2916V10.6249H2.70831V9.37498H6.04165V7.70831H7.29161V12.2916H6.04165ZM9.37498 10.6249V9.37498H17.2916V10.6249H9.37498ZM12.7083 7.29161V2.70831H13.9583V4.37498H17.2916V5.62494H13.9583V7.29161H12.7083ZM2.70831 5.62494V4.37498H10.6249V5.62494H2.70831Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function ExtendedThinkingIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.75001 20.596C8.95134 20.596 8.26451 20.3194 7.68951 19.7663C7.11451 19.2131 6.79818 18.5423 6.74051 17.7538C5.82384 17.6141 5.06101 17.1949 4.45201 16.4963C3.84301 15.7974 3.53851 14.9782 3.53851 14.0385C3.53851 13.7103 3.58118 13.3861 3.66651 13.0658C3.75168 12.7454 3.87951 12.4447 4.05001 12.1635C3.84751 11.8698 3.69559 11.5523 3.59426 11.2108C3.49293 10.8691 3.44226 10.5104 3.44226 10.1348C3.44226 9.17543 3.75801 8.34585 4.38951 7.64602C5.02084 6.94618 5.80259 6.53918 6.73476 6.42502C6.72826 6.39935 6.72501 6.37368 6.72501 6.34801V6.26152C6.75584 5.45635 7.06384 4.7756 7.64901 4.21927C8.23434 3.66293 8.93468 3.38477 9.75001 3.38477C10.209 3.38477 10.618 3.47451 10.977 3.65401C11.336 3.83335 11.677 4.08718 12 4.41552C12.3192 4.08718 12.6577 3.83335 13.0155 3.65401C13.3732 3.47451 13.7847 3.38477 14.25 3.38477C15.0563 3.38477 15.7503 3.66193 16.3318 4.21627C16.9131 4.77077 17.2192 5.44743 17.25 6.24626V6.33277C17.25 6.35843 17.2468 6.3841 17.2403 6.40977C18.1724 6.52377 18.9583 6.93176 19.598 7.63376C20.2378 8.3356 20.5578 9.16927 20.5578 10.1348C20.5578 10.5104 20.5055 10.8691 20.401 11.2108C20.2965 11.5523 20.1429 11.8698 19.9403 12.1635C20.1108 12.4443 20.2403 12.7449 20.3288 13.0653C20.4173 13.3858 20.4615 13.7102 20.4615 14.0385C20.4615 14.9948 20.1544 15.8198 19.5403 16.5135C18.9263 17.207 18.1577 17.6204 17.2345 17.7538C17.1768 18.5423 16.8647 19.2131 16.298 19.7663C15.7313 20.3194 15.0487 20.596 14.25 20.596C13.7885 20.596 13.3779 20.5088 13.0183 20.3345C12.6586 20.1602 12.3192 19.9057 12 19.571C11.6705 19.9057 11.3269 20.1602 10.9693 20.3345C10.6116 20.5088 10.2052 20.596 9.75001 20.596ZM12.75 6.38477V17.5963C12.75 18.0163 12.8954 18.3713 13.1863 18.6613C13.4771 18.9513 13.833 19.0963 14.254 19.0963C14.6552 19.0963 14.999 18.9468 15.2855 18.648C15.5722 18.3493 15.727 18.0013 15.75 17.6038C15.3295 17.5154 14.9413 17.3555 14.5855 17.124C14.2298 16.8927 13.9225 16.5962 13.6635 16.2345C13.5353 16.059 13.487 15.8721 13.5185 15.6738C13.55 15.4754 13.6541 15.3143 13.8308 15.1905C14.0064 15.0622 14.1946 15.0138 14.3953 15.0455C14.5961 15.077 14.7592 15.1811 14.8845 15.3578C15.0913 15.6586 15.3546 15.8889 15.6743 16.0488C15.9939 16.2086 16.3397 16.2885 16.7115 16.2885C17.3385 16.2885 17.8703 16.0703 18.3068 15.6338C18.7433 15.1971 18.9615 14.6653 18.9615 14.0385C18.9615 13.9123 18.9493 13.7863 18.925 13.6603C18.9007 13.5343 18.8622 13.4103 18.8095 13.2885C18.5262 13.4808 18.2137 13.6283 17.872 13.7308C17.5303 13.8333 17.1756 13.8845 16.8078 13.8845C16.5953 13.8845 16.4171 13.8127 16.2733 13.669C16.1296 13.5252 16.0578 13.3469 16.0578 13.1343C16.0578 12.9218 16.1296 12.7437 16.2733 12.6C16.4171 12.4565 16.5953 12.3848 16.8078 12.3848C17.4346 12.3848 17.9663 12.1664 18.403 11.7298C18.8395 11.2933 19.0578 10.7616 19.0578 10.1348C19.0578 9.51777 18.8427 8.99427 18.4125 8.56427C17.9823 8.13427 17.4603 7.90768 16.8463 7.88452C16.6756 8.19102 16.4508 8.45835 16.172 8.68652C15.8932 8.91468 15.582 9.09543 15.2385 9.22877C15.0423 9.3031 14.8508 9.29693 14.664 9.21026C14.4772 9.1236 14.3527 8.9811 14.2905 8.78277C14.2263 8.5866 14.234 8.39393 14.3135 8.20477C14.393 8.01577 14.534 7.88918 14.7365 7.82502C15.0378 7.72252 15.2821 7.54043 15.4693 7.27877C15.6564 7.01727 15.75 6.7176 15.75 6.37977C15.75 5.96243 15.6049 5.60893 15.3148 5.31927C15.0248 5.02943 14.6697 4.88452 14.2495 4.88452C13.8293 4.88452 13.4743 5.02952 13.1845 5.31952C12.8948 5.60952 12.75 5.9646 12.75 6.38477ZM11.25 17.5963V6.38477C11.25 5.9646 11.1049 5.60952 10.8148 5.31952C10.5248 5.02952 10.1697 4.88452 9.74951 4.88452C9.32934 4.88452 8.97434 5.02952 8.68451 5.31952C8.39484 5.60952 8.25001 5.9646 8.25001 6.38477C8.25001 6.7091 8.34101 7.0046 8.52301 7.27126C8.70518 7.53793 8.94684 7.72252 9.24801 7.82502C9.44418 7.88918 9.58776 8.01418 9.67876 8.20002C9.76976 8.38585 9.78376 8.5776 9.72076 8.77527C9.64526 8.97277 9.51301 9.11468 9.32401 9.20101C9.13501 9.28751 8.93918 9.2936 8.73651 9.21927C8.39301 9.08593 8.08184 8.90677 7.80301 8.68177C7.52418 8.45677 7.29943 8.19102 7.12876 7.88452C6.53143 7.90768 6.01768 8.13752 5.58751 8.57402C5.15734 9.01052 4.94226 9.53177 4.94226 10.1378C4.94226 10.7626 5.16051 11.2933 5.59701 11.7298C6.03368 12.1664 6.56543 12.3848 7.19226 12.3848C7.40476 12.3848 7.58293 12.4566 7.72676 12.6003C7.87043 12.7441 7.94226 12.9223 7.94226 13.135C7.94226 13.3475 7.87043 13.5256 7.72676 13.6693C7.58293 13.8128 7.40476 13.8845 7.19226 13.8845C6.82443 13.8845 6.46968 13.8333 6.12801 13.7308C5.78634 13.6283 5.47384 13.4808 5.19051 13.2885C5.13784 13.4103 5.09934 13.5343 5.07501 13.6603C5.05068 13.7863 5.03851 13.9123 5.03851 14.0385C5.03851 14.6653 5.25676 15.1971 5.69326 15.6338C6.12976 16.0703 6.66151 16.2885 7.28851 16.2885C7.66218 16.2885 8.00784 16.2081 8.32551 16.0473C8.64318 15.8863 8.90651 15.6564 9.11551 15.3578C9.24084 15.1811 9.40393 15.077 9.60476 15.0455C9.80543 15.0138 9.99359 15.0605 10.1693 15.1855C10.3449 15.3105 10.4488 15.4727 10.4808 15.672C10.5128 15.8715 10.4647 16.059 10.3365 16.2345C10.0712 16.5962 9.75801 16.8953 9.39701 17.1318C9.03618 17.3683 8.64551 17.5308 8.22501 17.6193C8.24801 18.0168 8.40701 18.3623 8.70201 18.6558C8.99684 18.9494 9.34484 19.0963 9.74601 19.0963C10.167 19.0963 10.5229 18.9513 10.8138 18.6613C11.1046 18.3713 11.25 18.0163 11.25 17.5963Z" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function ChatMicrophoneIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12.5 14C11.8013 14 11.2099 13.758 10.7259 13.274C10.242 12.79 10 12.1987 10 11.5V5.49998C10 4.80128 10.242 4.20993 10.7259 3.72595C11.2099 3.24198 11.8013 3 12.5 3C13.1987 3 13.79 3.24198 14.274 3.72595C14.758 4.20993 15 4.80128 15 5.49998V11.5C15 12.1987 14.758 12.79 14.274 13.274C13.79 13.758 13.1987 14 12.5 14ZM11.75 21.25V17.9538C10.1 17.7653 8.72917 17.0576 7.6375 15.8307C6.54583 14.6038 6 13.1602 6 11.5H7.49997C7.49997 12.8833 7.98747 14.0625 8.96247 15.0375C9.93747 16.0125 11.1166 16.5 12.5 16.5C13.8833 16.5 15.0625 16.0125 16.0375 15.0375C17.0125 14.0625 17.5 12.8833 17.5 11.5H19C19 13.1602 18.4541 14.6038 17.3625 15.8307C16.2708 17.0576 14.8999 17.7653 13.2499 17.9538V21.25H11.75ZM12.5 12.5C12.7833 12.5 13.0208 12.4041 13.2125 12.2125C13.4041 12.0208 13.5 11.7833 13.5 11.5V5.49998C13.5 5.21664 13.4041 4.97914 13.2125 4.78748C13.0208 4.59581 12.7833 4.49998 12.5 4.49998C12.2166 4.49998 11.9791 4.59581 11.7875 4.78748C11.5958 4.97914 11.5 5.21664 11.5 5.49998V11.5C11.5 11.7833 11.5958 12.0208 11.7875 12.2125C11.9791 12.4041 12.2166 12.5 12.5 12.5Z" fill="currentColor"/>
+    </svg>
   );
 }
 
@@ -142,7 +117,7 @@ export default function SmartAssistSidenav({
   onClose,
   onExpand,
   bookTitle: _bookTitle,
-  title = "Smart Assist",
+  title,
   variant = "temporary",
   showInsights = false,
   audience = "admin",
@@ -155,9 +130,21 @@ export default function SmartAssistSidenav({
     isGenerating,
     prompt,
     setPrompt,
+    composerFocusNonce,
+    requestComposerFocus,
+    consumeComposerFocus,
+    requestPersonalization,
     handleSend,
     handleToggleSource,
+    inBook,
+    currentBookTitle,
+    bookScopeTitle,
+    isBookScope,
+    setBookScope,
+    setGlobalScope,
+    composerPlaceholder,
     resetChat,
+    deleteAllThreads,
     loadThread,
     threads,
     chatTimestamp,
@@ -176,8 +163,44 @@ export default function SmartAssistSidenav({
 
   const [smartAssistView, setSmartAssistView] = useState<"new-chat" | "thread-list">("new-chat");
   const [moreMenuAnchor, setMoreMenuAnchor] = useState<HTMLElement | null>(null);
-  const [personalizationOpen, setPersonalizationOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const composerInputRef = useRef<HTMLTextAreaElement>(null);
+  // The composer wrapper element, used to anchor the suggestion dropdown above
+  // it. Stored in state (callback ref) so the dropdown re-renders once mounted.
+  const [composerAnchor, setComposerAnchor] = useState<HTMLDivElement | null>(null);
+
+  // Thread-list section collapse state
+  const [pinnedIds] = useState<Set<string>>(() =>
+    audience === "director" ? new Set(threads.slice(0, 2).map(t => t.id)) : new Set<string>()
+  );
+  const [pinsOpen, setPinsOpen] = useState(true);
+  const [projectsOpen, setProjectsOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(true);
+
+  // Composer toolbar state
+  const [extendedThinking, setExtendedThinking] = useState(false);
+  const [toolsMenuAnchor, setToolsMenuAnchor] = useState<HTMLElement | null>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
+
+  const pinnedThreads = threads.filter(t => pinnedIds.has(t.id));
+  const unpinnedThreads = threads.filter(t => !pinnedIds.has(t.id));
+
+  // Focus the composer when a prompt template is selected (here, or via the
+  // shared signal when this panel is opened by a selection on another surface
+  // such as the admin home rail). Gated on `open` so a closed/other surface
+  // never consumes the focus request — the visible panel claims it. Deferred a
+  // frame so it wins over the Drawer's focus trap, which grabs focus on enter.
+  useEffect(() => {
+    if (!open) return;
+    if (!consumeComposerFocus()) return;
+    const id = requestAnimationFrame(() => {
+      const el = composerInputRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [composerFocusNonce, open, consumeComposerFocus]);
 
   const chatStarted = messages.length > 0;
 
@@ -213,7 +236,9 @@ export default function SmartAssistSidenav({
       ? "Smart Prep"
       : selectedInsight === "risk"
         ? "Smart Risk Scanner"
-        : null;
+        : selectedInsight === "audit"
+          ? "Audit Smart Prep"
+          : null;
   const subheaderLabel =
     effectiveTab === 0
       ? currentThreadId !== null
@@ -226,7 +251,6 @@ export default function SmartAssistSidenav({
   };
 
   const showInput = effectiveTab === 0 && smartAssistView === "new-chat";
-  const showThreadListFooter = effectiveTab === 0 && smartAssistView === "thread-list";
 
   // Scroll the chat's own container to the bottom without disturbing
   // ancestor scrollers (using scrollIntoView on a sentinel can scroll the
@@ -264,11 +288,20 @@ export default function SmartAssistSidenav({
       open={open}
       variant={variant}
       onClose={onClose}
+      // Keep the paper's slide in lockstep with the root width transition above
+      // and with the home hero, so opening/closing reads as one coordinated move.
+      transitionDuration={300}
+      SlideProps={{ easing: "cubic-bezier(0.2, 0, 0, 1)" }}
       sx={{
         width: open ? DRAWER_WIDTH + 24 : 0,
         minWidth: 0,
         overflow: "hidden",
         flexShrink: 0,
+        // Animate the layout slot so closing slides the panel out in step with
+        // the home hero re-expanding, instead of snapping width to 0 (which
+        // clipped the paper and made the panel vanish instantly). Matches the
+        // hero's easing so the two move together.
+        transition: "width 300ms cubic-bezier(0.2, 0, 0, 1)",
         ...(variant === "persistent" && { height: "100%" }),
         "& .MuiDrawer-paper": {
           width: DRAWER_WIDTH,
@@ -311,24 +344,27 @@ export default function SmartAssistSidenav({
             </Box>
             <Typography
               sx={{
-                fontSize: "20px",
+                fontSize: "16px",
                 fontWeight: 600,
-                lineHeight: "24px",
+                lineHeight: "20px",
                 color: color.type.default.value,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
               }}
             >
-              {title}
+              {title ?? (audience === "director" ? "AI Board Member" : "Smart Assist")}
             </Typography>
           </Stack>
-          <Stack direction="row" alignItems="center" gap="16px" sx={{ flexShrink: 0 }}>
-            <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={onExpand} title="Open full screen">
-              <FullscreenIcon size="lg" />
+          <Stack direction="row" alignItems="center" gap="6px" sx={{ flexShrink: 0 }}>
+            <IconButton sx={{ p: "4px", width: 32, height: 32 }} title="Notifications">
+              <BellIcon size="lg" />
             </IconButton>
             <IconButton sx={{ p: "4px", width: 32, height: 32 }} title="More options" onClick={(e) => setMoreMenuAnchor(e.currentTarget)}>
               <MoreIcon size="lg" />
+            </IconButton>
+            <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={onExpand} title="Open full screen">
+              <FullscreenIcon size="lg" />
             </IconButton>
             <IconButton sx={{ p: "4px", width: 32, height: 32 }} onClick={onClose} title="Close">
               <CloseIcon size="lg" />
@@ -338,44 +374,29 @@ export default function SmartAssistSidenav({
 
         {/* Tabs row — only in GovernAI (book) context */}
         {showInsights && (
-          <Stack
-            direction="row"
-            alignItems="center"
-            gap="8px"
-            sx={{
-              flexShrink: 0,
-              px: "16px",
-              py: "8px",
-            }}
-          >
-            {(["Smart Assist", "Insights"] as const).map((label, idx) => (
-              <Box
-                key={label}
-                component="button"
-                onClick={() => handleTabChange(idx)}
-                sx={{
-                  all: "unset",
-                  cursor: "pointer",
-                  px: "12px",
-                  py: "4px",
-                  borderRadius: "9999px",
-                  border: activeTab === idx ? `1px solid ${color.type.default.value}` : "1px solid transparent",
-                  color: color.type.default.value,
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  lineHeight: "20px",
-                  transition: "border-color 0.15s, color 0.15s",
-                }}
-              >
-                {label}
-              </Box>
-            ))}
-          </Stack>
+          /* Classic Atlas light-theme tabs. The Atlas theme draws the
+             full-width bottom divider and the active underline; only inset the
+             labels to the panel's 16px gutter so the divider stays edge-to-edge. */
+          <Box sx={{ flexShrink: 0 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => handleTabChange(v)}
+              aria-label="Smart Assist sections"
+              // The group's continuous bottom divider ships at zIndex -1, which
+              // hides it behind the panel background and leaves a gap between the
+              // per-tab dividers. Lift it to 0 so it reads as one edge-to-edge
+              // line under the whole tab group (full panel width in the dock).
+              sx={{ "& .MuiTabs-flexContainer": { pl: "16px" }, "&::after": { zIndex: 0 } }}
+            >
+              <Tab label={audience === "director" ? "AI Board Member" : "Smart Assist"} id="sa-panel-tab-0" aria-controls="sa-panel-tabpanel-0" />
+              <Tab label="Insights" id="sa-panel-tab-1" aria-controls="sa-panel-tabpanel-1" />
+            </Tabs>
+          </Box>
         )}
 
       </Box>
 
-      {/* ── Subheader ── */}
+      {/* ── Subheader (secondary navigation) ── */}
       {showSubheader && (
         <Stack
           direction="row"
@@ -383,9 +404,14 @@ export default function SmartAssistSidenav({
           gap="4px"
           sx={{
             flexShrink: 0,
-            px: "8px",
-            py: "6px",
-            borderTop: `1px solid ${color.ui.divider.default.value}`,
+            // Align the secondary-nav gutter to the tab inset, fix the row to
+            // 40px tall, and drop the top border when tabs are present — the
+            // tab strip already draws the divider above, so a second line would
+            // double it up.
+            px: "16px",
+            py: "4px",
+            height: "40px",
+            borderTop: showInsights ? "none" : `1px solid ${color.ui.divider.default.value}`,
             backgroundColor: color.surface.default.value,
           }}
         >
@@ -412,8 +438,12 @@ export default function SmartAssistSidenav({
         </Stack>
       )}
 
-      {/* Gradient accent border — always at the bottom of the full header area */}
-      <Box sx={{ height: "1px", flexShrink: 0, background: AI_GRADIENT }} />
+      {/* Accent border at the bottom of the full header area. Suppressed when
+          the tab group is shown without a subheader — the tab strip's own bottom
+          divider already closes the header, so a second line would double it. */}
+      {!(showInsights && !showSubheader) && (
+        <Box sx={{ height: "1px", flexShrink: 0, background: color.ui.divider.default.value }} />
+      )}
 
       {/* ── Smart Assist tab — new chat ── */}
       {effectiveTab === 0 && smartAssistView === "new-chat" && (
@@ -438,54 +468,30 @@ export default function SmartAssistSidenav({
                   color: color.type.default.value,
                   mt: "8px",
                   mb: "24px",
+                  // 8px side padding lines the title's text up with the (plain,
+                  // borderless) chips' content below it.
+                  px: "8px",
                 }}
               >
-                How can I assist you?
+                What would you like to know?
               </Typography>
-              <SuggestionCards
-                cards={audience === "director" ? directorSuggestionCards : suggestionCards}
-                onSelect={(p) => setPrompt(p)}
+              {/* Suggestion chips — in the panel all five render as a plain
+                  (borderless) vertical list. Shared with the home hero (small)
+                  and full-screen view, which instead show three outlined chips
+                  plus a "Show more" overflow. Clicking populates the composer. */}
+              <SuggestionChips
+                size="large"
+                align="flex-start"
+                audience={audience}
+                variant="plain"
+                layout="list"
+                promptSet="default"
+                showLearn={false}
+                anchorEl={composerAnchor}
+                onSelectPrompt={(p) => { setPrompt(p); requestComposerFocus(); }}
+                onSubmitPrompt={(p) => handleSend(p)}
+                onChipOpen={requestComposerFocus}
               />
-              <Box
-                component="button"
-                onClick={() => handleSend(ONBOARDING_PROMPT)}
-                sx={{
-                  all: "unset",
-                  boxSizing: "border-box",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  mt: "10px",
-                  mx: "4px",
-                  px: "16px",
-                  height: "56px",
-                  borderRadius: radius.lg.value,
-                  backgroundColor: color.surface.default.value,
-                  border: `1px solid ${color.ui.divider.default.value}`,
-                  transition: "background-color 0.15s ease",
-                  "&:hover": { backgroundColor: color.surface.variant.value },
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: "50%",
-                    border: "1.5px solid #004c6c",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#004c6c", lineHeight: 1 }}>?</Typography>
-                </Box>
-                <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#004c6c", lineHeight: "16px", letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
-                  New to Smart Assist? Ask me what I can help you with.
-                </Typography>
-              </Box>
             </Box>
           ) : (
             <Box sx={{ "& .AtlasAIChatUserMessage .MuiTypography-body1": { fontSize: "14px !important" }, "& li": { fontSize: "14px" } }}>
@@ -513,12 +519,21 @@ export default function SmartAssistSidenav({
                           slotProps={{ root: { sx: { flexDirection: "row-reverse" } } }}
                         />
                       }
+                      slotProps={{
+                        root: {
+                          sx: {
+                            "& > div:last-child": {
+                              boxShadow: "inset 0 0 0 1px #DEE0E9 !important",
+                            },
+                          },
+                        },
+                      }}
                     />
                   ) : (
                     <AIChatAIMessage
                       header={
                         <AIChatMessageHeader
-                          name="Smart Assist"
+                          name={audience === "director" ? "AI Board Member" : "Smart Assist"}
                           time={msg.timestamp}
                           avatar={<AIChatMessageAvatar uniqueId="smart-assist" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                         />
@@ -550,7 +565,7 @@ export default function SmartAssistSidenav({
                 <AIChatAIMessage
                   header={
                     <AIChatMessageHeader
-                      name="Smart Assist"
+                      name={audience === "director" ? "AI Board Member" : "Smart Assist"}
                       time=""
                       avatar={<AIChatMessageAvatar uniqueId="smart-assist-thinking" imageUrl={smartAssistAvatarUrl} avatarProps={{ sx: { borderRadius: "8px", backgroundColor: "transparent", border: "none", boxShadow: "none" } }} />}
                     />
@@ -568,43 +583,135 @@ export default function SmartAssistSidenav({
 
       {/* ── Smart Assist tab — thread list ── */}
       {effectiveTab === 0 && smartAssistView === "thread-list" && (
-        <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", background: THREAD_BG, pt: "24px", px: "16px", pb: "16px" }}>
-          <Button
-            variant="text"
-            size="small"
-            startIcon={<AddCircleIcon size="lg" />}
-            onClick={handleNewChat}
-            sx={{
-              height: "24px",
-              pl: "8px !important",
-              pr: "8px !important",
-              py: "4px",
-              borderRadius: "8px",
-              fontSize: "12px",
-              fontWeight: 600,
-              lineHeight: "16px",
-              letterSpacing: "0.3px",
-              color: "#242628",
-              textTransform: "none",
-              "& .MuiButton-startIcon": { marginRight: "4px !important", color: "#242628" },
-              mb: "24px",
-            }}
-          >
-            New chat
-          </Button>
-          <Typography sx={{ fontSize: "12px", fontWeight: 600, lineHeight: "16px", color: color.type.muted.value, mb: "8px", px: "12px" }}>
-            All chats
-          </Typography>
-          <Stack>
-            {threads.map((thread) => (
-              <ChatThreadItem
-                key={thread.id}
-                thread={thread}
-                variant="sidenav"
-                onLoadThread={handleLoadThread}
-              />
-            ))}
-          </Stack>
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", background: THREAD_BG, pt: "8px", px: "12px", pb: "16px" }}>
+
+          {/* New chat */}
+          <Box sx={{ px: "4px", mb: "4px" }}>
+            <Box
+              component="button"
+              onClick={handleNewChat}
+              sx={{
+                all: "unset", boxSizing: "border-box", cursor: "pointer",
+                display: "flex", width: "100%", px: "4px", py: "8px",
+                borderRadius: "12px", alignItems: "center", gap: "8px",
+                "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+              }}
+            >
+              <Box sx={{ width: 20, height: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: color.type.default.value }}>
+                <AddCircleIcon size="md" />
+              </Box>
+              <Box sx={{ flex: "1 1 0", fontSize: "12px", fontWeight: 400, lineHeight: "16px", color: color.type.default.value }}>New chat</Box>
+            </Box>
+          </Box>
+
+          {/* Tasks nav item */}
+          <Box sx={{ px: "4px", mb: "4px" }}>
+            <Box
+              component="button"
+              sx={{
+                all: "unset", boxSizing: "border-box", cursor: "pointer",
+                display: "flex", width: "100%", px: "4px", py: "8px",
+                borderRadius: "12px", alignItems: "center", gap: "8px",
+                "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
+              }}
+            >
+              <Box sx={{ width: 20, height: 20, flexShrink: 0, display: "flex", alignItems: "center", color: color.type.default.value }}><TaskIcon size="md" /></Box>
+              <Box sx={{ flex: "1 1 0", fontSize: "12px", fontWeight: 400, lineHeight: "16px", color: color.type.default.value }}>Tasks</Box>
+            </Box>
+          </Box>
+
+          {/* Sections */}
+          <Box sx={{ pt: "8px", display: "flex", flexDirection: "column", gap: "20px" }}>
+
+            {/* Pinned */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <Box
+                onClick={() => setPinsOpen(o => !o)}
+                sx={{ cursor: "pointer", display: "flex", width: "100%", px: "8px", py: "8px", borderRadius: "12px", alignItems: "center", gap: "8px", "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" } }}
+              >
+                <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", color: color.type.default.value }}><PinIcon size="md" /></Box>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <Box sx={{ color: color.type.default.value, fontSize: "12px", fontWeight: 400, lineHeight: "16px" }}>Pinned</Box>
+                  <Box sx={{ display: "flex", alignItems: "center", color: color.type.default.value }}>
+                    {pinsOpen
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11.9997 16.7077L5.3457 10.0537L6.404 8.99536L11.9997 14.591L17.5953 8.99536L18.6537 10.0537L11.9997 16.7077Z" fill="currentColor"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13.9463 12.0003L8.35059 6.40466L9.4089 5.34636L15.5089 11.4003L15.063 11.9462L9.4089 18.654L8.35059 17.5957L13.9463 12.0003Z" fill="currentColor"/></svg>}
+                  </Box>
+                </Box>
+                <Box sx={{ flex: 1 }} />
+              </Box>
+              {pinsOpen && (
+                pinnedThreads.length === 0 ? (
+                  <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value, pl: "20px", pt: "2px" }}>No pinned items</Typography>
+                ) : (
+                  <Box sx={{ pl: "16px", display: "flex", gap: "4px" }}>
+                    <Box sx={{ width: "1px", alignSelf: "stretch", backgroundColor: "#DEE0E9", flexShrink: 0 }} />
+                    <Box sx={{ flex: "1 1 0" }}>
+                      {pinnedThreads.map((thread) => (
+                        <ChatThreadItem key={thread.id} thread={thread} variant="sidenav" onLoadThread={handleLoadThread} onNewChat={handleNewChat} />
+                      ))}
+                    </Box>
+                  </Box>
+                )
+              )}
+            </Box>
+
+            {/* Projects */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <Box
+                onClick={() => setProjectsOpen(o => !o)}
+                sx={{ cursor: "pointer", display: "flex", width: "100%", px: "8px", py: "8px", borderRadius: "12px", alignItems: "center", gap: "8px", "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" } }}
+              >
+                <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", color: color.type.default.value }}><FolderIcon size="md" /></Box>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <Box sx={{ color: color.type.default.value, fontSize: "12px", fontWeight: 400, lineHeight: "16px" }}>Projects</Box>
+                  <Box sx={{ display: "flex", alignItems: "center", color: color.type.default.value }}>
+                    {projectsOpen
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11.9997 16.7077L5.3457 10.0537L6.404 8.99536L11.9997 14.591L17.5953 8.99536L18.6537 10.0537L11.9997 16.7077Z" fill="currentColor"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13.9463 12.0003L8.35059 6.40466L9.4089 5.34636L15.5089 11.4003L15.063 11.9462L9.4089 18.654L8.35059 17.5957L13.9463 12.0003Z" fill="currentColor"/></svg>}
+                  </Box>
+                </Box>
+              </Box>
+              {projectsOpen && (
+                <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value, pl: "20px", pt: "2px" }}>No projects yet</Typography>
+              )}
+            </Box>
+
+            {/* Chat history */}
+            <Box sx={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <Box
+                onClick={() => setHistoryOpen(o => !o)}
+                sx={{ cursor: "pointer", display: "flex", width: "100%", px: "8px", py: "8px", borderRadius: "12px", alignItems: "center", gap: "8px", "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" } }}
+              >
+                <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center", color: color.type.default.value }}><MessageIcon size="md" /></Box>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <Box sx={{ color: color.type.default.value, fontSize: "12px", fontWeight: 400, lineHeight: "16px" }}>Chat history</Box>
+                  <Box sx={{ display: "flex", alignItems: "center", color: color.type.default.value }}>
+                    {historyOpen
+                      ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M11.9997 16.7077L5.3457 10.0537L6.404 8.99536L11.9997 14.591L17.5953 8.99536L18.6537 10.0537L11.9997 16.7077Z" fill="currentColor"/></svg>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M13.9463 12.0003L8.35059 6.40466L9.4089 5.34636L15.5089 11.4003L15.063 11.9462L9.4089 18.654L8.35059 17.5957L13.9463 12.0003Z" fill="currentColor"/></svg>}
+                  </Box>
+                </Box>
+                <Box sx={{ flex: 1 }} />
+                {unpinnedThreads.length > 0 && <DeleteAllChatsMenu onDeleteAll={deleteAllThreads} />}
+              </Box>
+              {historyOpen && (
+                unpinnedThreads.length === 0 ? (
+                  <Typography sx={{ fontSize: "12px", lineHeight: "16px", color: color.type.muted.value, pl: "20px", pt: "2px" }}>No recent chats</Typography>
+                ) : (
+                  <Box sx={{ pl: "16px", display: "flex", gap: "4px" }}>
+                    <Box sx={{ width: "1px", alignSelf: "stretch", backgroundColor: "#DEE0E9", flexShrink: 0 }} />
+                    <Box sx={{ flex: "1 1 0" }}>
+                      {unpinnedThreads.map((thread) => (
+                        <ChatThreadItem key={thread.id} thread={thread} variant="sidenav" onLoadThread={handleLoadThread} onNewChat={handleNewChat} />
+                      ))}
+                    </Box>
+                  </Box>
+                )
+              )}
+            </Box>
+
+          </Box>
         </Box>
       )}
 
@@ -637,11 +744,13 @@ export default function SmartAssistSidenav({
                   { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Read a summary before or after reviewing materials" },
                   { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare confidently with suggested discussion topics and questions" },
                   { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+                  { Icon: AuditSmartPrepIcon, id: "audit" as const, label: "Audit Smart Prep", desc: "Prepare for the audit committee with an expert lens" },
                 ] as const)
               : ([
                   { Icon: SmartSummaryIcon, id: "summary", label: "Smart Summary", desc: "Create and read an accurate executive summary" },
                   { Icon: SmartPrepIcon, id: "prep", label: "Smart Prep", desc: "Prepare smarter with suggested discussion topics" },
                   { Icon: SmartRiskScannerIcon, id: "risk", label: "Smart Risk Scanner", desc: "Identify potential business risks" },
+                  { Icon: AuditSmartPrepIcon, id: "audit" as const, label: "Audit Smart Prep", desc: "Prepare for the audit committee with an expert lens" },
                 ] as const)
             ).map(({ Icon, id, label, desc }) => (
               <Box
@@ -707,6 +816,7 @@ export default function SmartAssistSidenav({
           {selectedInsight === "summary" && <InsightSummaryView />}
           {selectedInsight === "prep" && <InsightPrepView />}
           {selectedInsight === "risk" && <InsightRiskView />}
+          {selectedInsight === "audit" && <InsightAuditView />}
         </Box>
       )}
 
@@ -757,28 +867,9 @@ export default function SmartAssistSidenav({
         </Box>
       )}
 
-      {/* ── Thread list footer ── */}
-      {showThreadListFooter && (
-        <Box
-          sx={{
-            flexShrink: 0,
-            px: "16px",
-            py: "16px",
-            borderTop: `1px solid ${color.ui.divider.default.value}`,
-            backgroundColor: color.surface.default.value,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-        >
-          <Button variant="text" size="small">
-            Delete all chats
-          </Button>
-        </Box>
-      )}
-
       {/* ── Input area (Smart Assist / new chat only) ── */}
-      {showInput && <Box sx={{ flexShrink: 0, backgroundColor: color.surface.default.value }}>
-        {/* AI glow highlight top border */}
+      {showInput && <Box ref={setComposerAnchor} sx={{ position: "relative", flexShrink: 0, backgroundColor: color.surface.default.value }}>
+        {/* AI gradient highlight top border */}
         <Box
           sx={{
             height: "1px",
@@ -802,6 +893,7 @@ export default function SmartAssistSidenav({
         <InputBase
           multiline
           fullWidth
+          inputRef={composerInputRef}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => {
@@ -810,7 +902,7 @@ export default function SmartAssistSidenav({
               handleSend(prompt);
             }
           }}
-          placeholder="Ask me anything about your board materials"
+          placeholder={composerPlaceholder}
           sx={{
             color: color.type.default.value,
             "& .MuiInputBase-input": { padding: "16px 24px 12px !important", height: "80px !important", overflow: "auto !important", fontSize: "14px !important", lineHeight: "20px !important" },
@@ -827,21 +919,76 @@ export default function SmartAssistSidenav({
             pb: "8px",
           }}
         >
-          <SourcesFilterButton sources={sources} onToggle={handleToggleSource} />
-          <IconButton
-            size="small"
-            onClick={() => { if (prompt.trim()) handleSend(prompt); }}
-            disabled={!prompt.trim() || isGenerating}
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: "10px",
-              border: `1px solid ${color.ui.divider.default.value}`,
-              color: prompt.trim() ? color.type.default.value : color.type.muted.value,
-            }}
-          >
-            <ArrowUpIcon size="md" />
-          </IconButton>
+          {/* Leading: attach + tools + sources */}
+          <Stack direction="row" alignItems="center" gap="2px">
+            <input type="file" ref={attachmentInputRef} style={{ display: "none" }} />
+            <Tooltip title="Attach file">
+              <IconButton
+                size="small"
+                onClick={() => attachmentInputRef.current?.click()}
+                sx={{ width: 32, height: 32, p: "4px", borderRadius: "8px", color: color.type.default.value }}
+              >
+                <UploadFileIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Tools">
+              <IconButton
+                size="small"
+                onClick={(e) => setToolsMenuAnchor(toolsMenuAnchor ? null : e.currentTarget)}
+                sx={{ width: 32, height: 32, p: "4px", borderRadius: "8px", color: color.type.default.value }}
+              >
+                <ToolsSliderIcon />
+              </IconButton>
+            </Tooltip>
+            <SourcesFilterButton
+              sources={sources}
+              onToggle={handleToggleSource}
+              mvp={{
+                inBook,
+                currentBookTitle,
+                bookScopeTitle,
+                isBookScope,
+                onSelectBook: setBookScope,
+                onSelectGlobal: setGlobalScope,
+              }}
+            />
+          </Stack>
+          {/* Trailing: extended thinking + voice + submit */}
+          <Stack direction="row" alignItems="center" gap="4px">
+            <Tooltip title="Extended thinking — smarter responses for complex questions" placement="top">
+              <IconButton
+                size="small"
+                onClick={() => setExtendedThinking((v) => !v)}
+                sx={{
+                  width: 32, height: 32, p: "4px", borderRadius: "8px",
+                  color: extendedThinking ? "#4069FE" : color.type.default.value,
+                  backgroundColor: extendedThinking ? "rgba(64,105,254,0.10)" : undefined,
+                  "&:hover": { backgroundColor: extendedThinking ? "rgba(64,105,254,0.16)" : undefined },
+                }}
+              >
+                <ExtendedThinkingIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Voice input" placement="top">
+              <IconButton size="small" sx={{ width: 32, height: 32, p: "4px", borderRadius: "8px", color: color.type.default.value }}>
+                <ChatMicrophoneIcon />
+              </IconButton>
+            </Tooltip>
+            <IconButton
+              size="small"
+              onClick={() => { if (prompt.trim()) handleSend(prompt); }}
+              disabled={!prompt.trim() || isGenerating}
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "10px",
+                border: `1px solid ${color.ui.divider.default.value}`,
+                color: prompt.trim() ? color.type.default.value : color.type.muted.value,
+              }}
+            >
+              <ArrowUpIcon size="md" />
+            </IconButton>
+          </Stack>
         </Box>
         </Box>
         <Box
@@ -862,9 +1009,7 @@ export default function SmartAssistSidenav({
     <AIMoreMenu
       anchorEl={moreMenuAnchor}
       onClose={() => setMoreMenuAnchor(null)}
-      onPersonalizationClick={() => setPersonalizationOpen(true)}
     />
-    <PersonalizationDialog open={personalizationOpen} onClose={() => setPersonalizationOpen(false)} />
     </>
   );
 }

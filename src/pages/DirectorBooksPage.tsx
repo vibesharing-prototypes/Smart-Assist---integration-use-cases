@@ -473,7 +473,7 @@ export default function DirectorBooksPage() {
     setActiveTab(1);
     setSelectedInsight(insight);
     openPanel();
-    navigate(bookPath);
+    navigate(bookPath, { state: { from: "/director/books" } });
   };
 
   const filtered = directorBooks.filter((b) =>
@@ -556,7 +556,7 @@ export default function DirectorBooksPage() {
                   "&:hover::before, &::after, &:hover::after": { display: "none" },
                 }}
               >
-                Smart Assist
+                AI Board Member
               </Button>
             )}
           </Stack>
@@ -592,7 +592,7 @@ export default function DirectorBooksPage() {
                 <RecentlyVisitedCard
                   key={book.id}
                   book={book}
-                  onClick={() => navigate(`/director/books/${book.id}`)}
+                  onClick={() => navigate(`/director/books/${book.id}`, { state: { from: "/director/books" } })}
                 />
               ))}
             </Box>
@@ -664,7 +664,7 @@ export default function DirectorBooksPage() {
                   book={book}
                   isLast={i === filtered.length - 1}
                   showCommittee={showCommittee}
-                  onClick={() => navigate(`/director/books/${book.id}`)}
+                  onClick={() => navigate(`/director/books/${book.id}`, { state: { from: "/director/books" } })}
                   onSmartSummary={() => openInsightInBook("summary", `/director/books/${book.id}`)}
                   onSmartPrep={() => openInsightInBook("prep", `/director/books/${book.id}`)}
                 />
